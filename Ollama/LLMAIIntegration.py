@@ -21,6 +21,7 @@ def speak_text(text):
     engine.runAndWait()
 
 # Example usage
-response = query_ollama("make me a story")
+user_input = input("Ask something(make sure it is very clear): ")
+response = query_ollama("hi")
 print(response)
 speak_text(response)
