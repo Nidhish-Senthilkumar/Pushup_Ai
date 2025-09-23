@@ -19,7 +19,7 @@ def calculate_angle(a, b, c):
     return np.degrees(angle)
 
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
-    with open("./good_pushup_data.csv", 'w', newline="") as f:
+    with open("./saggingpushup.csv", 'w', newline="") as f:
         writer = csv.writer(f)
         
         while True:
@@ -54,8 +54,11 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                     for i in range(len(landmarks)):
                         row = [i, landmarks[i].x, landmarks[i].y, landmarks[i].z]
                         actualrow.extend(row)
-                        actualrow.append('1') # change this to 1 if good pushup
-                                              # 0 = bad pushup | 0.5 = mid pushup
+                        actualrow.append('4') 
+                        # 1 = good pushup
+                        # 2 = elbows flared
+                        # 3 = backhigh
+                        # 4 = sagging
                     writer.writerow(actualrow)
                     f.flush()  # Force write to file immediately
                     
