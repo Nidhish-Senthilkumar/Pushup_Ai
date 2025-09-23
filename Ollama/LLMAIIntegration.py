@@ -1,7 +1,7 @@
 import requests
 import pyttsx3
 
-def query_ollama(prompt, model="llama3"):
+def query_ollama(prompt, model="gemma3:1b"):
     url = "http://localhost:11434/api/generate"
     payload = {
         "model": model,
@@ -21,6 +21,6 @@ def speak_text(text):
     engine.runAndWait()
 
 # Example usage
-response = query_ollama("hi")
+response = query_ollama("make me a story")
 print(response)
 speak_text(response)

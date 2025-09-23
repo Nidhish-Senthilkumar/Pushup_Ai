@@ -4,8 +4,12 @@ import mediapipe as mp
 import numpy as np
 
 cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
+
+pushup_active = False
 
 def calculate_angle(a, b, c):
     ba = a - b
@@ -15,7 +19,7 @@ def calculate_angle(a, b, c):
     return np.degrees(angle)
 
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
-    with open("pushup_csv_data.csv", 'w', newline="") as f:
+    with open("./good_pushup_data.csv", 'w', newline="") as f:
         writer = csv.writer(f)
         
         while True:
@@ -41,17 +45,23 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                 relbow = np.array([landmarks[14].x, landmarks[14].y])
 
                 r_elbow_angle = calculate_angle(rshoulder, relbow, rwrist)
-                
-                if r_elbow_angle < 120:
+
+                if r_elbow_angle < 120 and not pushup_active:
+                    pushup_active = True
+
+                if pushup_active:
                     actualrow = []
                     for i in range(len(landmarks)):
                         row = [i, landmarks[i].x, landmarks[i].y, landmarks[i].z]
                         actualrow.extend(row)
+                        actualrow.append('1') # change this to 1 if good pushup
+                                              # 0 = bad pushup | 0.5 = mid pushup
                     writer.writerow(actualrow)
                     f.flush()  # Force write to file immediately
                     
-                else:
-                    pass
+                if r_elbow_angle > 140 and pushup_active:
+                    pushup_active = False
+                    writer.writerow(["END PUSHUP"])
 
             # Draw landmarks
             mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
