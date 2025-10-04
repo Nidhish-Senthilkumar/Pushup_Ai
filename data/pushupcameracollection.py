@@ -61,7 +61,7 @@ def calculate_angle(a, b, c):
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
     # Open a CSV file to save pushup data (spreadsheet format).
     # Change the filename (e.g., "./saggingpushup.csv") to match the pushup type you’re recording.
-    with open("./saggingpushup.csv", 'w', newline="") as f:
+    with open("./backhighpushup1.csv", 'w', newline="") as f:
         writer = csv.writer(f)
         
         while True:
