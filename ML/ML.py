@@ -16,7 +16,11 @@ BATCH_SIZE = 16
 
 
 def load_sequences_from_csv(path):
-    """Load sequences from a single CSV. Last column of the last row in a sequence is the label."""
+    """Load sequences from a single CSV. Supports two formats:
+    - one timestep per CSV row: [feat1, feat2, ..., featN, label]
+    - many timesteps flattened in one CSV row: [idx, f1, f2, f3, lbl, idx, f1, f2, f3, lbl, ...]
+    The sequence label is taken from the last frame's label in the sequence.
+    """
     pushup_sequences = []
     labels = []
     current_sequence = []
@@ -25,27 +29,24 @@ def load_sequences_from_csv(path):
     with open(path, "r", newline='') as f:
         reader = csv.reader(f)
         for row in reader:
-            if not row:
-                continue
-            if row[0] == "END PUSHUP":
-                if current_sequence:
-                    pushup_sequences.append(current_sequence)
-                    labels.append(current_label)
-                    current_sequence = []
-                    current_label = None
-            else:
-                try:
-                    features = [float(x) for x in row[:-1]]  # all except last column
-                    current_label = int(float(row[-1]))      # last column is label
-                    current_sequence.append(features)
-                except ValueError:
-                    # skip malformed row
-                    continue
 
-    # append last sequence if file does not end with END PUSHUP
-    if current_sequence:
+            if row[0].strip() == "END PUSHUP":
+                pushup_sequences.append(current_sequence)
+                labels.append(current_label)
+                current_sequence = []
+                current_label = None
+                continue
+
+            features = [float(x) for x in row[:-1]]
+            label = int(float(row[-1]))
+            current_sequence.append(features)
+            current_label = label
+                
+    # append last sequence if file doesn't end with END PUSHUP
+    if current_sequence and current_label is not None:
         pushup_sequences.append(current_sequence)
         labels.append(current_label)
+    print(labels)
 
     return pushup_sequences, labels
 
@@ -85,10 +86,6 @@ def normalize_sequences(pushup_sequences, scaler):
 def normalize_single_sequence(sequence, scaler, max_timesteps=MAX_TIMESTEPS):
     """Normalize a single sequence and pad it to model input shape."""
     arr = np.array(sequence)
-    if arr.ndim != 2:
-        raise ValueError("Input sequence must be 2D (timesteps, features)")
-    if arr.shape[1] != scaler.scale_.shape[0]:
-        raise ValueError(f"Feature dim mismatch: input {arr.shape[1]} vs scaler {scaler.scale_.shape[0]}")
     norm = scaler.transform(arr)
     padded = pad_sequences([norm], maxlen=max_timesteps, dtype='float32', padding='post', truncating='post')
     return padded
@@ -96,7 +93,7 @@ def normalize_single_sequence(sequence, scaler, max_timesteps=MAX_TIMESTEPS):
 
 def process_all_data(dir_path="data", max_timesteps=MAX_TIMESTEPS, num_classes=None):
     """Load all CSVs, fit scaler, normalize, pad, and one-hot labels.
-    Returns: X, y, scaler, sources (list of filenames per sample), class_count
+    Returns: X, y, scaler, sources, num_classes, label_map
     """
     seqs, labels, sources = load_all_csvs(dir_path)
     if not seqs:
@@ -110,14 +107,20 @@ def process_all_data(dir_path="data", max_timesteps=MAX_TIMESTEPS, num_classes=N
     if labels_arr.size == 0:
         raise ValueError("No labels found to convert to one-hot")
 
+    # remap original labels to consecutive 0..K-1
+    unique = np.unique(labels_arr)
+    label_map = {int(old): int(i) for i, old in enumerate(unique)}  # e.g. {2:0,3:1,5:2}
+    labels_mapped = np.array([label_map[int(x)] for x in labels_arr], dtype=int)
+
+    # determine num_classes from mapping if not provided
     if num_classes is None:
-        num_classes = int(labels_arr.max()) + 1
+        num_classes = len(unique)
 
-    if labels_arr.min() < 0 or labels_arr.max() >= num_classes:
-        raise ValueError(f"Labels must be in range 0..{num_classes-1}, found min={labels_arr.min()} max={labels_arr.max()}")
+    if labels_mapped.min() < 0 or labels_mapped.max() >= num_classes:
+        raise ValueError(f"Mapped labels must be in range 0..{num_classes-1}, found min={labels_mapped.min()} max={labels_mapped.max()}")
 
-    y = np.eye(num_classes, dtype=int)[labels_arr]
-    return X, y, scaler, sources, num_classes
+    y = np.eye(num_classes, dtype=int)[labels_mapped]
+    return X, y, scaler, sources, num_classes, label_map
 
 
 def build_model(max_timesteps, num_features, num_classes):
@@ -129,54 +132,59 @@ def build_model(max_timesteps, num_features, num_classes):
     return model
 
 
-def predict_and_report(model, X, sources, class_names=None):
-    """Predict on X and print per-file prediction summaries. Returns preds and predicted_classes."""
-    preds = model.predict(X)
-    pred_classes = np.argmax(preds, axis=1)
-
-    # aggregate by source file
-    summary = {}
-    for src, pc in zip(sources, pred_classes):
-        summary.setdefault(src, []).append(int(pc))
-
-    print("\nPrediction summary by file:")
-    for src, pcs in summary.items():
-        vals, counts = np.unique(pcs, return_counts=True)
-        counts_dict = dict(zip(vals.tolist(), counts.tolist()))
-        print(f" {src}: samples={len(pcs)}, predicted_counts={counts_dict}")
-
-    return preds, pred_classes
-
-
 def save_scaler(scaler, path):
     joblib.dump(scaler, path)
 
-
 def load_scaler(path):
     return joblib.load(path)
+
+def load_pred_sequences_from_csv(path):
+
+    current_sequence = []
+
+    sequences = []
+
+    with open(path, 'r') as f:
+        reader = csv.reader(f)
+
+        for row in reader:
+            if (row[0].strip() == "END PUSHUP"):
+                sequences.append(current_sequence)
+                current_sequence = []
+                continue
+        
+            features = [float(x) for x in row[:-1]]
+            current_sequence.append(features)
+
+    return sequences
 
 
 if __name__ == "__main__":
     model_path = "model_trained.h5"
     scaler_path = "scaler.save"
+    label_map_path = "label_map.save"
 
-    # always load raw sequences (no scaler) so we can prepare X for either predict or train
-    seqs, labels, sources = load_all_csvs("data")
+    
 
-    if os.path.exists(model_path) and os.path.exists(scaler_path):
-        print("Found saved model and scaler — loading for prediction")
+    if os.path.exists(model_path) and os.path.exists(scaler_path) and os.path.exists(label_map_path):
+
+        print("Found saved model/scaler/label_map — loading for prediction")
         model = load_model(model_path)
         scaler = load_scaler(scaler_path)
+        label_map = joblib.load(label_map_path)
 
-        # normalize using the loaded scaler and predict
-        normalized = normalize_sequences(seqs, scaler)
-        X = pad_sequences(normalized, maxlen=MAX_TIMESTEPS, dtype='float32', padding='post', truncating='post')
-        preds, pred_classes = predict_and_report(model, X, sources)
+        pred_sequences = load_pred_sequences_from_csv("data\\test_pushup")
+        norm_csv = normalize_sequences(pred_sequences, scaler)
 
+        X = pad_sequences(norm_csv, maxlen=MAX_TIMESTEPS, dtype='float32', padding='post', truncating='post')
+
+        predictions = model.predict(X)
+
+        print(np.argmax(predictions))
     else:
-        print("No saved model/scaler found — training a new model on all data")
-        # process_all_data fits a scaler, creates X and one-hot y
-        X, y, scaler, sources, num_classes = process_all_data("data", max_timesteps=MAX_TIMESTEPS, num_classes=None)
+        seqs, labels, sources = load_all_csvs("data")
+        print("No saved model/scaler/label_map found — training a new model on all data")
+        X, y, scaler, sources, num_classes, label_map = process_all_data("data", max_timesteps=MAX_TIMESTEPS, num_classes=None)
         num_features = X.shape[2]
 
         model = build_model(MAX_TIMESTEPS, num_features, num_classes)
@@ -184,8 +192,6 @@ if __name__ == "__main__":
 
         model.fit(X, y, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_split=0.1)
 
-        # save for next run and predict on the combined data
         model.save(model_path)
         save_scaler(scaler, scaler_path)
-
-        preds, pred_classes = predict_and_report(model, X, sources)
+        joblib.dump(label_map, label_map_path)
