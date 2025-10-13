@@ -68,5 +68,4 @@ model.summary()
 # --- 7️⃣ Train model ---
 model.fit(X, y, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_split=0.1)
 
-model.predict()
-# 76
+model.save("models/AIModel.keras")

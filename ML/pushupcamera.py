@@ -3,38 +3,6 @@ import csv            # lets us save data into a spreadsheet file
 import mediapipe as mp # library that can track body joints
 import numpy as np     # library for math and handling numbers
 
-# """
-# ==================== INSTRUCTIONS ====================
-
-# This program records pushup data using your webcam.
-# It tracks your body joints and saves them into a CSV file (like a spreadsheet).
-
-# WHAT YOU NEED TO DO:
-# 1. Make sure you have Python installed and the libraries (cv2, mediapipe, numpy).
-# 2. Run this program.  
-# 3. Stand in front of your webcam so your whole body is visible.
-# 4. Perform the type of pushup you want to record (example: sagging pushup).
-#    - The code will automatically detect when your elbow bends below 120° (pushup starts).
-#    - It will save your body positions into the CSV file while you are moving.
-#    - When your elbow straightens above 140°, it will mark the pushup as finished.
-# 5. The data gets saved in the CSV file named in the code 
-#    (default = "saggingpushup.csv").
-#    - If you want to record a different pushup type, 
-#      change the filename in the code before running it 
-#      (example: "elbowsflared.csv").
-# 6. Press the "q" key to quit the program when finished.
-
-# LABEL SYSTEM (what 'number' means in the file):
-# - 1 = good pushup
-# - 2 = elbows flared pushup
-# - 3 = back too high pushup
-# - 4 = sagging pushup
-
-# ======================================================
-# """
-
-number = 0
-
 # open webcam
 cap = cv2.VideoCapture(0)
 # set webcam resolution (width)
@@ -97,16 +65,6 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                 # if elbow bends below 120 degrees → pushup starts
                 if r_elbow_angle < 120 and not pushup_active:
                     pushup_active = True
-
-                # if a pushup is happening, record all body landmark data
-                if pushup_active:
-                    actualrow = []
-                    for i in range(len(landmarks)):
-                        row = [i, landmarks[i].x, landmarks[i].y, landmarks[i].z] # body point and its position
-                        actualrow.extend(row)
-                        actualrow.append(number)  # label for sagging pushup
-                    writer.writerow(actualrow)  # save to file
-                    f.flush()  # make sure data is written immediately
                     
                 # if elbow straightens above 140 degrees → pushup ends
                 if r_elbow_angle > 140 and pushup_active:
