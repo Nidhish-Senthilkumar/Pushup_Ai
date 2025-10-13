@@ -33,7 +33,7 @@ import numpy as np     # library for math and handling numbers
 # ======================================================
 # """
 
-number = 3
+number = 0  
 
 # open webcam
 cap = cv2.VideoCapture(0)
