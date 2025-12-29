@@ -17,6 +17,23 @@ mp_pose = mp.solutions.pose
 # keeps track if someone is currently doing a pushup
 pushup_active = False
 
+# 0 = good pushup
+# 1 = elbows wide
+# 2 = hips too high
+# 3 = sagging pushup
+
+label = 1
+pushupname = ""
+match label:
+    case 0:
+        pushup_name="good"
+    case 1:
+        pushup_name="elbowswide"
+    case 2:
+        pushup_name="hipshigh"
+    case 3:
+        pushup_name="sagging"
+
 # function to calculate angle between three body points (like shoulder-elbow-wrist)
 def calculate_angle(a, b, c):
     ba = a - b  # line from middle point to first point
@@ -30,7 +47,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
     # Open a CSV file to save pushup data (spreadsheet format).
     # Change the filename (e.g., "./saggingpushup.csv") to match the pushup type you’re recording.
     # Save to a temporary file for pipeline processing
-    with open("../temporaydatafile.csv", 'w', newline="") as f:
+    with open(f"./data/TRAINING_SET/{pushup_name}.csv", 'w', newline="") as f:
         writer = csv.writer(f)
         
         while True:
@@ -46,6 +63,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
 
             # process the frame and detect body landmarks
             results = pose.process(image)
+            
 
             image.flags.writeable = True
             # change colors back so OpenCV can show it
@@ -54,26 +72,33 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
             if results.pose_landmarks:
                 landmarks = results.pose_landmarks.landmark  # all body points detected
 
-                # grab right shoulder, wrist, and elbow positions
-                rshoulder = np.array([landmarks[12].x, landmarks[12].y])
-                rwrist = np.array([landmarks[16].x, landmarks[16].y])
-                relbow = np.array([landmarks[14].x, landmarks[14].y])
+                # Right side
+                r_shoulder = np.array([landmarks[12].x, landmarks[12].y])
+                r_elbow = np.array([landmarks[14].x, landmarks[14].y])
+                r_wrist = np.array([landmarks[16].x, landmarks[16].y])
+                r_hip = np.array([landmarks[24].x, landmarks[24].y])
+                r_knee = np.array([landmarks[26].x, landmarks[26].y])
 
-                # measure elbow bend
-                r_elbow_angle = calculate_angle(rshoulder, relbow, rwrist)
+                # Left side
+                l_shoulder = np.array([landmarks[11].x, landmarks[11].y])
+                l_elbow = np.array([landmarks[13].x, landmarks[13].y])
+                l_wrist = np.array([landmarks[15].x, landmarks[15].y])
+                l_hip = np.array([landmarks[23].x, landmarks[23].y])
+                l_knee = np.array([landmarks[25].x, landmarks[25].y])
+                
+                
+                m_hip = (r_hip+l_hip)/2
+                m_knee = (r_knee+l_knee)/2
+                m_shoulder = (l_shoulder+r_shoulder)/2
 
-                # if elbow bends below 120 degrees → pushup starts
-                if r_elbow_angle < 120 and not pushup_active:
-                    pushup_active = True
-                    
-                # if elbow straightens above 140 degrees → pushup ends
-                if r_elbow_angle > 140 and pushup_active:
-                    pushup_active = False
-                    writer.writerow(["END PUSHUP"])  # mark end of pushup
-                    f.flush()
-                    # After saving, trigger the ML and Ollama pipeline
-                    import subprocess
-                    subprocess.Popen(["python", "../Ollama/LLMAIIntegration.py"])  # Non-blocking call
+                r_shoulderang =  180 - calculate_angle(r_hip, r_shoulder, r_elbow)
+                l_shoulderang = 180 - calculate_angle(l_hip, l_shoulder, l_elbow)
+                hipang = calculate_angle(m_knee, m_hip, m_shoulder)
+                r_elbowang = calculate_angle(r_wrist, r_elbow, r_shoulder)
+                l_elbowang = calculate_angle(l_wrist, l_elbow, l_shoulder)
+
+                if (r_elbowang < 140):
+                    writer.writerow([hipang, r_shoulderang, l_shoulderang, r_elbowang, l_elbowang, label])
 
             # draw body landmarks on screen
             mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
