@@ -82,10 +82,10 @@ def generate_pushup_data(label, num_samples=150):
                 r_elbow = np.random.uniform(70, 125)
                 l_elbow = np.random.uniform(70, 125)
             else:  # Mid-range
-                hip = np.random.uniform(155, 175)
-                r_shoulder = np.random.uniform(135, 170)
+                hip = np.random.uniform(135, 150)
+                r_shoulder = np.random.uniform(150, 175)
                 l_shoulder = np.random.uniform(135, 170)
-                r_elbow = np.random.uniform(100, 135)
+                r_elbow = np.random.uniform(90, 140)
                 l_elbow = np.random.uniform(100, 135)
             
             data.append([hip, r_shoulder, l_shoulder, r_elbow, l_elbow, label])

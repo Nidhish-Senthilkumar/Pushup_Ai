@@ -22,6 +22,31 @@ def normalizeData(data):
     scaled_data = MinMaxScaler(feature_range=[0,1]).fit_transform(data)
     return scaled_data
 
+def testModel(model, scaler):
+    file_total_accuracy = []
+    bad_files_index = []
+
+    for i in range(500):
+        file_test = pd.read_csv(f"./data/fake_test_data/test_data{i}.csv", header=None)
+        file_X = file_test.iloc[:,:-1]
+        file_y = file_test.iloc[:,-1]
+        file_X_scaled = scaler.transform(file_X)
+        
+        file_pred = model.predict(file_X_scaled)
+
+        file_accuracy = accuracy_score(file_y, file_pred)
+
+        if file_accuracy < 0.60:
+            bad_files_index.append(file_y.iloc[0])
+
+        print(f"File Number {i} accuracy: {file_accuracy}")
+        file_total_accuracy.append(file_accuracy)
+
+    file_total_accuracy_perc = sum(file_total_accuracy) / len(file_total_accuracy)
+    print(bad_files_index)
+    print(f"Total File Accuracy: {file_total_accuracy_perc*100}")
+
+
 def trainModel():
     trainingData = getAllTrainingData('data/fake_training_data')
     trainingData.dropna()
@@ -50,19 +75,12 @@ def trainModel():
 
     print(f"Model Accuracy: {accuracy*100}%")
 
-    file_total_accuracy = []
+    print("-----------------------------------------------------------------")
+    print("-----------------------------------------------------------------")
+    print("-----------------------------------------------------------------")
 
-    for i in range(500):
-        file_test = pd.read_csv(f"./data/fake_test_data/test_data{i}.csv")
-        file_X = file_test.iloc[:,:-1]
-        file_y = file_test.iloc[:,-1]
-        file_X_scaled = scaler.transform(file_X)
-        file_pred = model.predict(file_X_scaled)
-        file_accuracy = accuracy_score(file_y, file_pred)
-        print(f"File Number {i} accuracy: {file_accuracy}")
-        file_total_accuracy.append(file_accuracy)
+    testModel(model, scaler)
 
-    file_total_accuracy_perc = sum(file_total_accuracy) / len(file_total_accuracy)
-    print(f"Total File Accuracy: {file_total_accuracy_perc*100}")
+
         
 trainModel()
