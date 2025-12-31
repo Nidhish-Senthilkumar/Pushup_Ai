@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Push-Up AI Trainer</title>
+  <link rel="stylesheet" href="Styles_AI.css">
+
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- LEFT SIDE: Camera Feed -->
+    <div class="camera-section">
+      <h2>Camera View</h2>
+      <div class="camera-box" style="position:relative; width:640px; height:480px;">
+        <!-- Webcam feed goes here -->
+        <video id="input_video" class="camera-video" autoplay playsinline style="width:100%; height:100%; object-fit:contain; background:black;"></video>
+        <!-- Canvas overlay for exoskeleton/skeleton -->
+        <canvas id="overlay" width="640" height="480" style="position:absolute; left:0; top:0; pointer-events:none; display:none"></canvas>
+        <div class="camera-controls" style="position:absolute; left:8px; bottom:8px; z-index:2;">
+          <button id="startRecording" class="btn" type="button">Start Recording (10s)</button>
+          <div id="recordStatus" class="record-status">Idle</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE: Feedback Panel -->
+    <div class="feedback-panel">
+      <h2 class="title">AI Coach</h2>
+      <!-- Status -->
+      <div id="aiStatusGood" class="status good">GOOD FORM</div>
+      <div id="aiStatusBad" class="status bad">BAD FORM</div>
+
+      <!-- Tip -->
+      <div id="aiTip" class="tip">Keep a straight line from head to heels</div>
+
+      <!-- Stats -->
+      <div class="status">
+        <p><strong>Push-ups:</strong> <span id="pushupCount">0</span></p>
+        <p><strong>Form Accuracy:</strong> <span id="formAccuracy">0%</span></p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="websitejavascript.js"></script>
+</html>

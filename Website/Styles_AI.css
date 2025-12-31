@@ -1,0 +1,146 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #111;
+  height: 100vh;
+  display: flex;
+}
+
+.container {
+  display: flex;
+  flex: 1;
+}
+
+/* LEFT SIDE: Camera Section */
+.camera-section {
+  flex: 2; /* bigger than feedback panel */
+  background: #1c1c1c;
+  padding: 20px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.camera-box {
+  flex: 1;
+  background: #000;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  color: gray;
+  text-align: center;
+  padding: 0;
+}
+
+/* Make video fill the camera box */
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.camera-controls {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 5;
+}
+
+/* Primary button style used across the site */
+.btn {
+  background: #3498db;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+.btn:hover {
+  background: #2b86c9;
+}
+
+.record-status {
+  background: rgba(0,0,0,0.5);
+  color: #000000;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  flex: 1;
+  background: #f4f6f8;
+  padding: 20px;
+  box-shadow: -4px 0 10px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  color: white;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Status Boxes */
+.status {
+  padding: 15px;
+  color: white;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.good {
+  background: #2ecc71;
+  color: white;
+}
+
+.bad {
+  background: #e74c3c;
+  color: white;
+}
+
+/* Tip Text */
+.tip {
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+/* Stats */
+.stats p {
+  margin: 6px 0;
+  font-size: 15px;
+}
+
+/* Progress Bar */
+.progress-container {
+  background: #ddd;
+  border-radius: 20px;
+  height: 14px;
+  margin-top: 15px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 60%; /* change this to reflect real progress */
+  background: #3498db;
+}
