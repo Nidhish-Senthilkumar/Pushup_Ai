@@ -30,7 +30,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
     # Open a CSV file to save pushup data (spreadsheet format).
     # Change the filename (e.g., "./saggingpushup.csv") to match the pushup type you’re recording.
     # Save to a temporary file for pipeline processing
-    with open("../temporaydatafile.csv", 'w', newline="") as f:
+    with open("../temporarydatafile.csv", 'w', newline="") as f:
         writer = csv.writer(f)
         
         while True:

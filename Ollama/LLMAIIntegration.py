@@ -8,16 +8,16 @@ from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
 import os
 
-# Constants
+# variables
 CSV_PATH = "./temporarydatafile.csv"
-MODEL_PATH = "pushup_model.h5"  # Save your trained model with this name
-MAX_TIMESTEPS = 30
+MODEL_PATH = "model_trained.h5"  # Save your trained model with this name
+MAX_TIMESTEPS = 50
 NUM_CLASSES = 3
 
 # Load your trained model
 model = load_model(MODEL_PATH)
 
-# Re-initialize the same scaler (ideally you save the scaler when training)
+# Re-initialize the same scaler 
 def load_scaler():
     # For simplicity, re-fit the scaler (in production, save and load it)
     dummy_data = []
@@ -85,7 +85,7 @@ def read_latest_pushup(csv_path):
         return None
 
 # Main monitoring loop
-print("📹 Waiting for pushup data...")
+print(" Waiting for pushup data...")
 last_processed_len = 0
 
 while True:
@@ -100,11 +100,11 @@ while True:
 
     if current_lines.count("END PUSHUP\n") > last_processed_len:
         # New pushup detected
-        print("📊 New pushup detected. Analyzing...")
+        print("New pushup detected. Analyzing...")
 
         pushup = read_latest_pushup(CSV_PATH)
         if not pushup:
-            print("⚠️ Failed to read pushup data.")
+            print(" Failed to read pushup data.")
             continue
 
         # Normalize + pad
@@ -123,12 +123,12 @@ while True:
         else:
             feedback_prompt = "This was a bad push-up. Give clear advice on how to improve it."
 
-        print(f"🤖 AI says: {feedback_prompt}")
+        print(f" AI says: {feedback_prompt}")
         ollama_response = query_ollama(feedback_prompt)
-        print(f"🗣️ Feedback: {ollama_response}")
+        print(f" Feedback: {ollama_response}")
 
         speak_text(ollama_response)
 
         last_processed_len += 1
     else:
-        print("⌛ Waiting for next pushup...")
+        print(" Waiting for next pushup...")
