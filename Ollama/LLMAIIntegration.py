@@ -7,24 +7,29 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
 import os
-
-# variables
-CSV_PATH = "./temporarydatafile.csv"
-MODEL_PATH = "model_trained.h5"  # Save your trained model with this name
-MAX_TIMESTEPS = 50
+import joblib
+# Constants
+CSV_PATH = "./recording.csv"
+MODEL_PATH = "Models\\model_trained.keras"  # use saved model
+SCALER_PATH = "Models\\scaler.save"         # expected saved scaler
+MAX_TIMESTEPS = 50                          # match training MAX_TIMESTEPS
 NUM_CLASSES = 3
 
 # Load your trained model
 model = load_model(MODEL_PATH)
 
-# Re-initialize the same scaler 
-def load_scaler():
-    # For simplicity, re-fit the scaler (in production, save and load it)
+# Load scaler (fall back to re-fit if scaler file missing)
+def load_scaler(path=SCALER_PATH):
+    if os.path.exists(path):
+        return joblib.load(path)
+    # fallback: re-fit (not ideal) - keep previous behavior if scaler not saved
     dummy_data = []
     with open("ML/good_pushup_data.csv", "r") as f:
         reader = csv.reader(f)
         for row in reader:
-            if row[0] != "END PUSHUP":
+            if not row:
+                continue
+            if row[0].strip() != "END PUSHUP":
                 try:
                     features = [float(x) for x in row[:-1]]
                     dummy_data.append(features)
@@ -46,7 +51,7 @@ def query_ollama(prompt, model="gemma3:1b"):
     }
     response = requests.post(url, json=payload)
     if response.status_code == 200:
-        return response.json()['response']
+        return response.json().get('response', '')
     else:
         raise Exception(f"Error: {response.status_code} - {response.text}")
 
@@ -68,7 +73,9 @@ def read_latest_pushup(csv_path):
     sequences = []
     current = []
     for row in all_rows:
-        if row[0] == "END PUSHUP":
+        if not row:
+            continue
+        if row[0].strip() == "END PUSHUP":
             if current:
                 sequences.append(current)
                 current = []
@@ -84,9 +91,8 @@ def read_latest_pushup(csv_path):
     else:
         return None
 
-# Main monitoring loop
-print(" Waiting for pushup data...")
-last_processed_len = 0
+print("📹 Waiting for pushup data...")
+last_processed_count = 0
 
 while True:
     time.sleep(2)  # check every 2 seconds
@@ -98,23 +104,30 @@ while True:
     with open(CSV_PATH, "r") as f:
         current_lines = f.readlines()
 
-    if current_lines.count("END PUSHUP\n") > last_processed_len:
+    end_count = sum(1 for L in current_lines if "END PUSHUP" in L)
+    if end_count > last_processed_count:
         # New pushup detected
         print("New pushup detected. Analyzing...")
 
         pushup = read_latest_pushup(CSV_PATH)
         if not pushup:
-            print(" Failed to read pushup data.")
-            continue
+            print("⚠️ Failed to read pushup data.")
+            last_processed_count = end_count
 
         # Normalize + pad
-        pushup = scaler.transform(pushup)
-        pushup = pad_sequences([pushup], maxlen=MAX_TIMESTEPS, dtype='float32', padding='post', truncating='post')
+        try:
+            pushup_arr = np.array(pushup, dtype=float)
+            pushup_norm = scaler.transform(pushup_arr)
+            pushup_padded = pad_sequences([pushup_norm], maxlen=MAX_TIMESTEPS, dtype='float32', padding='post', truncating='post')
+        except Exception as e:
+            print("⚠️ Error preparing pushup for prediction:", e)
+            last_processed_count = end_count
+            continue
 
         # Predict
-        prediction = model.predict(pushup)
-        class_id = np.argmax(prediction)
-        confidence = np.max(prediction)
+        prediction = model.predict(pushup_padded)
+        class_id = int(np.argmax(prediction))
+        confidence = float(np.max(prediction))
 
         if class_id == 0:
             feedback_prompt = "This was a great push-up. Explain why it is good form."
@@ -123,12 +136,13 @@ while True:
         else:
             feedback_prompt = "This was a bad push-up. Give clear advice on how to improve it."
 
-        print(f" AI says: {feedback_prompt}")
+        print(f"🤖 AI prompt: {feedback_prompt}")
         ollama_response = query_ollama(feedback_prompt)
         print(f" Feedback: {ollama_response}")
 
         speak_text(ollama_response)
 
-        last_processed_len += 1
+        last_processed_count = end_count
     else:
-        print(" Waiting for next pushup...")
+        # quiet waiting - only print occasionally to avoid spamming
+        time.sleep(1)
