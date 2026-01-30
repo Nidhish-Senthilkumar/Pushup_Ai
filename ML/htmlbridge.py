@@ -131,6 +131,7 @@ def upload_pose_data():
     depth_frames = 0
     hip_ok_frames = 0
     valid_frames = 0
+    hip_deviation_sum = 0.0
 
     for f in frames:
         lm = f.get('landmarks')
@@ -182,6 +183,9 @@ def upload_pose_data():
         # if hips roughly in line with shoulders (y difference small) count as ok
         if abs(hip_mid_y - sh_mid_y) < 0.08:  # threshold in normalized coords
             hip_ok_frames += 1
+        # accumulate signed deviation (positive -> hips lower/sagging, negative -> hips high)
+        hip_deviation_sum += (hip_mid_y - sh_mid_y)
+
 
     total_reps = max(left_count, right_count)
     depth_ratio = (depth_frames / valid_frames) if valid_frames else 0
@@ -190,13 +194,32 @@ def upload_pose_data():
     # form accuracy heuristic
     form_accuracy = 100 * (0.6 * depth_ratio + 0.4 * hip_ratio)
 
-    # tip selection
-    if hip_ratio < 0.6:
-        tip = 'Keep your hips in line with your shoulders (avoid sagging/high hips)'.capitalize()
-    elif depth_ratio < 0.5:
-        tip = 'Try lowering your chest more on the down phase'.capitalize()
+    # tip selection using label map
+    label_map = {
+        0: ('Good pushup', 'Good form — keep it up!'),
+        1: ('Elbows wide', 'Keep elbows closer to your body; avoid flaring.'),
+        2: ('Hips high', 'Lower your hips so your body forms a straight line.'),
+        3: ('Knees sagging', 'Engage your core and straighten your legs to avoid sagging.')
+    }
+
+    if valid_frames == 0:
+        tip_label = 0
     else:
-        tip = 'Good form — keep it up!'
+        if hip_ratio < 0.6:
+            mean_hip_offset = hip_deviation_sum / valid_frames
+            # if hips are lower than shoulders -> sagging; if hips are higher -> hips high
+            if mean_hip_offset > 0.02:
+                tip_label = 3  # hips sagging
+            elif mean_hip_offset < -0.02:
+                tip_label = 2  # hips high
+            else:
+                tip_label = 3
+        elif depth_ratio < 0.5:
+            tip_label = 1
+        else:
+            tip_label = 0
+
+    tip = label_map.get(tip_label, (None, 'Model suggests review form.'))[1]
 
     resp = {
         'pushups': total_reps,
@@ -228,14 +251,7 @@ def upload_pose_data():
             except Exception:
                 confidence = None
 
-            # Interpret multiclass model output: labels 0..3 map to specific pushup issues
-            label_map = {
-                0: ('Good pushup', 'Good form — keep it up!'),
-                1: ('Elbows wide', 'Keep elbows closer to your body; avoid flaring.'),
-                2: ('Hips high', 'Lower your hips so your body forms a straight line.'),
-                3: ('Knees sagging', 'Engage your core and straighten your legs to avoid sagging.')
-            }
-
+            # Interpret multiclass model output: labels 0..3 map to specific pushup issues (use existing label_map)
             pred_label = int(pred[0]) if hasattr(pred, '__len__') else int(pred)
             label_name, label_tip = label_map.get(pred_label, ('Unknown', 'Model suggests review form.'))
 
@@ -244,7 +260,8 @@ def upload_pose_data():
             resp['predicted_label'] = pred_label
             resp['predicted_label_name'] = label_name
             resp['form_accuracy'] = form_score
-            resp['tip'] = f"Model: {label_tip}"
+            # use the label_map's tip string directly (no 'Model:' prefix)
+            resp['tip'] = label_tip
         except Exception as e:
             # If ML path fails, keep heuristic
             resp['model_based'] = False

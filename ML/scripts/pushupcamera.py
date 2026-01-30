@@ -47,11 +47,8 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
     # Open a CSV file to save pushup data (spreadsheet format).
     # Change the filename (e.g., "./saggingpushup.csv") to match the pushup type you’re recording.
     # Save to a temporary file for pipeline processing
-<<<<<<< HEAD:ML/pushupcamera.py
-    with open("../temporarydatafile.csv", 'w', newline="") as f:
-=======
+
     with open(f"./data/TRAINING_SET/{pushup_name}.csv", 'w', newline="") as f:
->>>>>>> a1ce64968710a281d8b125636e4cbb5d3a8a69e7:ML/scripts/pushupcamera.py
         writer = csv.writer(f)
         
         while True:
