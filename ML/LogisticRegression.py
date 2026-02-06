@@ -8,12 +8,12 @@ from scripts.functions import getAllTrainingData, testModel
 
 def trainModel():
     pd.set_option('display.max_rows', None)
-    trainingData = getAllTrainingData('./data/fake_training_data')
+    trainingData = getAllTrainingData('./data/TRAINING_SET')
 
     X = trainingData.iloc[:,:-1]
     y = trainingData.iloc[:,-1]
 
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
     scaler = MinMaxScaler()
 
@@ -22,8 +22,7 @@ def trainModel():
 
     model = LogisticRegression(
         solver='lbfgs',
-        max_iter=1000,
-        random_state=67
+        max_iter=100000,
     )
 
     model.fit(X_train_scaled, y_train)
@@ -37,7 +36,4 @@ def trainModel():
 
     joblib.dump(model, 'F:\Projects\AI\Internship\Models\LogisticRegression\model.pkl')
     joblib.dump(scaler, 'F:\Projects\AI\Internship\Models\LogisticRegression\scaler.pkl')
-
-    testModel(model, scaler, "LogRegression", None)
-
 trainModel()

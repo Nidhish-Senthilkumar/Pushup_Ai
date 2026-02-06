@@ -22,7 +22,7 @@ pushup_active = False
 # 2 = hips too high
 # 3 = sagging pushup
 
-label = 1
+label = 0
 pushupname = ""
 match label:
     case 0:

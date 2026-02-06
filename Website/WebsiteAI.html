@@ -7,18 +7,15 @@
   </head>
   <body>
     <div class="container">
-      <!-- LEFT SIDE: Camera Feed -->
       <div class="camera-section">
         <h2>Camera View</h2>
         <div class="camera-box">
-          <!-- Webcam feed goes here -->
           <video
             id="input_video"
             class="camera-video"
             autoplay
             playsinline
           ></video>
-          <!-- Canvas overlay for exoskeleton/skeleton -->
           <canvas
             id="overlay"
             style="
@@ -39,21 +36,17 @@
         </div>
       </div>
 
-      <!-- RIGHT SIDE: Feedback Panel -->
       <div class="feedback-panel">
         <h2 class="title">AI Coach</h2>
 
-        <!-- Tip -->
         <div id="aiTip" class="tip">Record A Pushup!</div>
 
-        <!-- Stats -->
         <div class="status">
           <p><strong>Push-ups:</strong> <span id="pushupCount">0</span></p>
         </div>
       </div>
     </div>
 
-    <!-- Load libraries in correct order -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
