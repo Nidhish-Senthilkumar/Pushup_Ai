@@ -24,40 +24,51 @@ function calculateAngle(a, b, c) {
   return Math.acos(cosAngle) * (180 / Math.PI);
 }
 
-function extractFeatures(landmarks) {
+function extractFeatures(landmarks, label) {
   if (!landmarks || landmarks.length < 33) return null;
 
+  // Right side
   const r_shoulder = [landmarks[12].x, landmarks[12].y];
   const r_elbow = [landmarks[14].x, landmarks[14].y];
   const r_wrist = [landmarks[16].x, landmarks[16].y];
   const r_hip = [landmarks[24].x, landmarks[24].y];
   const r_knee = [landmarks[26].x, landmarks[26].y];
+  const r_ankle = [landmarks[28].x, landmarks[28].y];
+
+  // Left side
   const l_shoulder = [landmarks[11].x, landmarks[11].y];
   const l_elbow = [landmarks[13].x, landmarks[13].y];
   const l_wrist = [landmarks[15].x, landmarks[15].y];
   const l_hip = [landmarks[23].x, landmarks[23].y];
   const l_knee = [landmarks[25].x, landmarks[25].y];
+  const l_ankle = [landmarks[27].x, landmarks[27].y];
 
+  // Midpoints
   const m_hip = [(r_hip[0] + l_hip[0]) / 2, (r_hip[1] + l_hip[1]) / 2];
   const m_knee = [(r_knee[0] + l_knee[0]) / 2, (r_knee[1] + l_knee[1]) / 2];
-  const m_shoulder = [
-    (l_shoulder[0] + r_shoulder[0]) / 2,
-    (l_shoulder[1] + r_shoulder[1]) / 2,
-  ];
+  const m_shoulder = [(r_shoulder[0] + l_shoulder[0]) / 2, (r_shoulder[1] + l_shoulder[1]) / 2];
+  const m_elbow = [(r_elbow[0] + l_elbow[0]) / 2, (r_elbow[1] + l_elbow[1]) / 2];
 
+  // Angles
   const r_shoulderAngle = 180 - calculateAngle(r_hip, r_shoulder, r_elbow);
   const l_shoulderAngle = 180 - calculateAngle(l_hip, l_shoulder, l_elbow);
   const hipAngle = calculateAngle(m_knee, m_hip, m_shoulder);
+  const r_kneeAngle = calculateAngle(r_hip, r_knee, r_ankle);
+  const l_kneeAngle = calculateAngle(l_hip, l_knee, l_ankle);
   const r_elbowAngle = calculateAngle(r_wrist, r_elbow, r_shoulder);
   const l_elbowAngle = calculateAngle(l_wrist, l_elbow, l_shoulder);
 
-  return [
-    hipAngle,
-    r_shoulderAngle,
-    l_shoulderAngle,
-    r_elbowAngle,
-    l_elbowAngle,
-  ];
+  // Mid angles
+  const m_shoulderAngle = (r_shoulderAngle + l_shoulderAngle) / 2;
+  const m_elbowAngle = (r_elbowAngle + l_elbowAngle) / 2;
+  const m_kneeAngle = (r_kneeAngle + l_kneeAngle) / 2;
+
+  // Only return if right elbow is bent enough
+  if (r_elbowAngle < 140) {
+    return [hipAngle, m_shoulderAngle, m_elbowAngle, m_kneeAngle];
+  } else {
+    return null;
+  }
 }
 
 async function classifySequence(frames) {

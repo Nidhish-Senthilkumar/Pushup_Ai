@@ -22,7 +22,9 @@ pushup_active = False
 # 2 = hips too high
 # 3 = sagging pushup
 
-label = 0
+validation = False
+
+label = 3
 pushupname = ""
 match label:
     case 0:
@@ -48,7 +50,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
     # Change the filename (e.g., "./saggingpushup.csv") to match the pushup type you’re recording.
     # Save to a temporary file for pipeline processing
 
-    with open(f"./data/TRAINING_SET/{pushup_name}.csv", 'w', newline="") as f:
+    with open(f"./data/TRAINING_SET/{pushup_name}.csv" if not validation else f"./data/VALIDATION_SET/{pushup_name}.csv", 'w', newline="") as f:
         writer = csv.writer(f)
         
         while True:
@@ -79,27 +81,34 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                 r_wrist = np.array([landmarks[16].x, landmarks[16].y])
                 r_hip = np.array([landmarks[24].x, landmarks[24].y])
                 r_knee = np.array([landmarks[26].x, landmarks[26].y])
-
+                r_ankle = np.array([landmarks[28].x, landmarks[28].y])
                 # Left side
                 l_shoulder = np.array([landmarks[11].x, landmarks[11].y])
                 l_elbow = np.array([landmarks[13].x, landmarks[13].y])
                 l_wrist = np.array([landmarks[15].x, landmarks[15].y])
                 l_hip = np.array([landmarks[23].x, landmarks[23].y])
                 l_knee = np.array([landmarks[25].x, landmarks[25].y])
-                
+                l_ankle = np.array([landmarks[27].x, landmarks[27].y])                
                 
                 m_hip = (r_hip+l_hip)/2
                 m_knee = (r_knee+l_knee)/2
                 m_shoulder = (l_shoulder+r_shoulder)/2
+                m_elbow = (l_elbow+r_elbow)/2
 
                 r_shoulderang =  180 - calculate_angle(r_hip, r_shoulder, r_elbow)
                 l_shoulderang = 180 - calculate_angle(l_hip, l_shoulder, l_elbow)
                 hipang = calculate_angle(m_knee, m_hip, m_shoulder)
+                r_kneeang = calculate_angle(r_hip, r_knee, r_ankle)
+                l_kneeang = calculate_angle(l_hip, l_knee, l_ankle)
                 r_elbowang = calculate_angle(r_wrist, r_elbow, r_shoulder)
                 l_elbowang = calculate_angle(l_wrist, l_elbow, l_shoulder)
 
+                m_shoulder_ang = (r_shoulderang+l_shoulderang)/2
+                m_elbow_ang = (r_elbowang + l_elbowang)/2
+                m_knee_ang = (r_kneeang+l_kneeang)/2
+
                 if (r_elbowang < 140):
-                    writer.writerow([hipang, r_shoulderang, l_shoulderang, r_elbowang, l_elbowang, label])
+                    writer.writerow([hipang, m_shoulder_ang, m_elbow_ang, m_knee_ang, label])
 
             # draw body landmarks on screen
             mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)

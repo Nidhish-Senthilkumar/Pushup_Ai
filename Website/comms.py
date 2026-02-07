@@ -11,7 +11,7 @@ model = tf.keras.models.load_model(r'Website\model\model.keras')
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json['features']
-    input_data = np.array(data).reshape(-1, 30, 5)
+    input_data = np.array(data).reshape(-1, 30, 4)
     pred = model.predict(input_data)
 
     pred_arr = np.mean(pred, axis=0)

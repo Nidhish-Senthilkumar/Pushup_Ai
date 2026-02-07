@@ -9,9 +9,9 @@ def createTrainingSequences(X, y, timestep):
     X_lstm = []
     y_lstm = []
 
-    for i in range(len(X) - timestep):
+    for i in range(0, len(X) - timestep, timestep):
         X_lstm.append(X[i: i+timestep])
-        y_lstm.append(y[i+timestep])
+        y_lstm.append(y[i+timestep - 1])
     
     return np.array(X_lstm), np.array(y_lstm)
 
