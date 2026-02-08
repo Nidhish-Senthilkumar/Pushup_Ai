@@ -225,7 +225,7 @@ async function stopRecording() {
       0: "✓ Good form!",
       1: "⚠ Keep elbows closer to body",
       2: "⚠ Lower your hips",
-      3: "⚠ Engage your core",
+      3: "⚠ Bring your knees up",
     };
     statusText.textContent = `${messages[result.class]}`;
     console.log("Result:", result);
