@@ -1,6 +1,7 @@
 // Simplified Pushup Form Analyzer
 
 const startBtn = document.getElementById("startRecording");
+const aifeedback = document.getElementById("aifeedback");
 const statusText = document.getElementById("recordStatus");
 const videoElement = document.getElementById("input_video");
 const overlay = document.getElementById("overlay");
@@ -220,6 +221,14 @@ async function stopRecording() {
 
   const result = await classifySequence(collectedFrames);
 
+  // const AIResponse = await fetch('http://localhost:5000/askai', {
+  //   method:'POST',
+  //   headers: {'Content-Type': 'application/json'},
+  //   body: JSON.stringify({pred_class: result.class})
+  // })
+
+  // console.log(AIResponse.message)
+
   if (result) {
     const messages = {
       0: "✓ Good form!",
@@ -229,6 +238,14 @@ async function stopRecording() {
     };
     statusText.textContent = `${messages[result.class]}`;
     console.log("Result:", result);
+    aiResponse = await fetch('http://localhost:5000/askai', {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({"pred_class": result.class})
+    })
+    const data = await aiResponse.json()
+    console.log(data.message)
+    aifeedback.textContent = data.message
   } else {
     statusText.textContent = "Could not analyze";
   }

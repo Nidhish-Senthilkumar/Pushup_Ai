@@ -31,7 +31,6 @@
             <button id="startRecording" class="btn" type="button" disabled>
               Loading Model...
             </button>
-            <div id="recordStatus" class="record-status">Loading AI model...</div>
           </div>
         </div>
       </div>
@@ -39,10 +38,10 @@
       <div class="feedback-panel">
         <h2 class="title">AI Coach</h2>
 
-        <div id="aiTip" class="tip">Record A Pushup!</div>
+        <div id="recordStatus" style="text-align: center;" class="tip">Record A Pushup!</div>
 
         <div class="status">
-          <p>What you have achieved so far:</p>
+          <p id="aifeedback" style="max-width: 250px;">Your Feedback Will Appear Here!</p>
         </div>
       </div>
     </div>

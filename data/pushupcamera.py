@@ -24,7 +24,7 @@ pushup_active = False
 
 validation = False
 
-label = 3
+label = 2
 pushupname = ""
 match label:
     case 0:
