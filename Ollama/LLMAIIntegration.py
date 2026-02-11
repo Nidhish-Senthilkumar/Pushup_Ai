@@ -3,7 +3,7 @@ import ollama
 client = ollama.Client()
 
 model = 'gemma3:1b'
-prompt= 'what\'s python bruh'
+prompt= 'hello world'
 
 response = client.generate(model=model, prompt=prompt)
 
