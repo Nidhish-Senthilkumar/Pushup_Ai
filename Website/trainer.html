@@ -2,10 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Push-Up AI Trainer</title>
     <link rel="stylesheet" href="Styles_AI.css" />
   </head>
   <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-brand">Push-Up Trainer</div>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="trainer.html" class="active">AI Trainer</a></li>
+          <li><a href="stats.html">Stats</a></li>
+        </ul>
+      </div>
+    </nav>
+
     <div class="container">
       <div class="camera-section">
         <h2>Camera View</h2>
@@ -16,16 +28,7 @@
             autoplay
             playsinline
           ></video>
-          <canvas
-            id="overlay"
-            style="
-              position: absolute;
-              left: 0;
-              top: 0;
-              pointer-events: none;
-              display: none;
-            "
-          ></canvas>
+          <canvas id="overlay"></canvas>
           <div id="countdownOverlay" class="countdown"></div>
           <div class="camera-controls">
             <button id="startRecording" class="btn" type="button" disabled>
@@ -37,11 +40,9 @@
 
       <div class="feedback-panel">
         <h2 class="title">AI Coach</h2>
-
-        <div id="recordStatus" style="text-align: center;" class="tip">Record A Pushup!</div>
-
+        <div id="recordStatus" class="tip">Record A Pushup!</div>
         <div class="status">
-          <p id="aifeedback" style="max-width: 250px;">Your Feedback Will Appear Here!</p>
+          <p id="aifeedback">Your Feedback Will Appear Here!</p>
         </div>
       </div>
     </div>

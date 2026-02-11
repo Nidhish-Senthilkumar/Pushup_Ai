@@ -237,11 +237,11 @@ async function stopRecording() {
       3: "⚠ Bring your knees up",
     };
     statusText.textContent = `${messages[result.class]}`;
-    console.log("Result:", result);
+    aifeedback.textContent = "Loading..."
     aiResponse = await fetch('http://localhost:5000/askai', {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({"pred_class": result.class})
+      body: JSON.stringify({"pred_class": messages[result.class]})
     })
     const data = await aiResponse.json()
     console.log(data.message)

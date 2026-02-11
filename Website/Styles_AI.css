@@ -1,11 +1,62 @@
+/* Styles_AI.css */
+
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
   background: #111;
   height: 100vh;
   display: flex;
+  flex-direction: column;
 }
 
+/* Navbar */
+.navbar {
+  background: #1c1c1c;
+  border-bottom: 2px solid #3498db;
+  flex-shrink: 0;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+}
+
+.nav-brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #3498db;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.nav-links li a {
+  display: block;
+  padding: 20px 30px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.nav-links li a:hover {
+  background: #2c2c2c;
+}
+
+.nav-links li a.active {
+  background: #3498db;
+  color: white;
+}
+
+/* Container */
 .container {
   display: flex;
   flex: 1;
@@ -13,7 +64,7 @@ body {
 
 /* LEFT SIDE: Camera Section */
 .camera-section {
-  flex: 2; /* bigger than feedback panel */
+  flex: 2;
   background: #1c1c1c;
   padding: 20px;
   color: white;
@@ -39,7 +90,7 @@ body {
   color: gray;
   text-align: center;
   padding: 0;
-  min-height: 0; /* allow flex child to shrink properly */
+  min-height: 0;
 }
 
 /* Make overlay canvas cover the whole camera-box */
@@ -117,8 +168,14 @@ body {
   font-weight: 600;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
-.btn:hover {
+
+.btn:hover:not(:disabled) {
   background: #2b86c9;
+}
+
+.btn:disabled {
+  background: #666;
+  cursor: not-allowed;
 }
 
 .record-status {
@@ -132,6 +189,16 @@ body {
   gap: 8px;
   flex: 0 0 auto;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* RIGHT SIDE: Feedback Panel */
+.feedback-panel {
+  flex: 1;
+  background: #1c1c1c;
+  padding: 20px;
+  color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
@@ -167,6 +234,7 @@ body {
   border-radius: 8px;
   font-size: 14px;
   margin-bottom: 15px;
+  color: #000;
 }
 
 /* Stats */
@@ -186,6 +254,18 @@ body {
 
 .progress-bar {
   height: 100%;
-  width: 60%; /* change this to reflect real progress */
+  width: 60%;
   background: #3498db;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .nav-links li a {
+    padding: 20px 15px;
+    font-size: 14px;
+  }
 }
