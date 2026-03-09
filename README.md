@@ -46,7 +46,7 @@ pip install -r requirements.txt
 ### 5. Install Ollama Model
 
 ```bash
-ollama pushuptrainer -f Ollama/Modelfile
+ollama create pushuptrainer -f Ollama/Modelfile
 ```
 
 ### 6. Run the project
