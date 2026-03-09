@@ -28,7 +28,7 @@ def predict():
     })
 
 @app.route('/askai', methods=['POST'])
-def chatgptask():
+def ollamarequest():
     data = request.json['pred_class']
     model = 'pushuptrainer'
     client = ollama.Client()
