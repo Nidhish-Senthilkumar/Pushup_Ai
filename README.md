@@ -17,8 +17,8 @@ Not ready yet
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/yourproject.git
-cd yourproject
+git clone https://github.com/Nidhish-Senthilkumar/Pushup_Ai
+cd Pushup_Ai
 ```
 
 ### 2. Create a virtual environment (recommended)
@@ -62,8 +62,8 @@ python Website/comms.py
 
 ## Usage
 
-Click the record button on the website
-Make sure you are in frame
-Do pushups until the timer runs out
-Analyze the feedback
-Fix form until AI says good pushup
+- Click the record button on the website
+- Make sure you are in frame
+- Do pushups until the timer runs out
+- Analyze the feedback
+- Fix form until AI says "Good Pushup"
