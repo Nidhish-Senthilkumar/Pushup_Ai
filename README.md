@@ -10,6 +10,7 @@ Not ready yet
 ## Requirements
 
 - Python 3.11.9
+- Live Server Extension On Visual Studio Code
 - Webcam
 
 ## Installation
@@ -57,6 +58,8 @@ ollama create pushuptrainer -f Ollama/Modelfile
 ```bash
 python Website/comms.py
 ```
+
+- *Open ollama on your machine*
 
 - Make sure live server is working before using the website
 

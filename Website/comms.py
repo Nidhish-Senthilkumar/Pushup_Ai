@@ -7,7 +7,7 @@ import ollama
 app = Flask(__name__)
 CORS(app)
 
-model = tf.keras.models.load_model(r'Website\model\model.keras')
+model = tf.keras.models.load_model(r'Website\model\model.keras', compile=False)
 
 @app.route('/predict', methods=['POST'])
 def predict():
