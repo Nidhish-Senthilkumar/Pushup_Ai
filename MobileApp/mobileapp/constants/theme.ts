@@ -1,41 +1,66 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// ─── Color Palette ───────────────────────────────────────────────────────────
 
 export const Colors = {
   light: {
     text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
+    textSecondary: '#687076',
+    background: '#F2F3F5',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#E1E3E6',
+    accent: '#0a7ea4',
+    tint: '#0a7ea4',
     icon: '#687076',
     tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: '#0a7ea4',
   },
   dark: {
     text: '#ECEDEE',
+    textSecondary: '#9BA1A6',
     background: '#151718',
-    tint: tintColorDark,
+    backgroundElement: '#1E2022',
+    backgroundSelected: '#2C2F31',
+    accent: '#3c87f7',
+    tint: '#fff',
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    tabIconSelected: '#fff',
   },
 };
 
+// ─── ThemeColor ───────────────────────────────────────────────────────────────
+// Union of all color keys — used to type `type` prop on ThemedView and ThemedText
+
+export type ThemeColor = keyof typeof Colors.dark & keyof typeof Colors.light;
+
+// ─── Spacing ──────────────────────────────────────────────────────────────────
+
+export const Spacing = {
+  half: 4,
+  one: 8,
+  two: 12,
+  three: 16,
+  four: 20,
+  five: 24,
+  six: 32,
+} as const;
+
+// ─── Layout ───────────────────────────────────────────────────────────────────
+
+/** Height reserved for the native bottom tab bar */
+export const BottomTabInset = 49;
+
+/** Max width of scrollable content (for large screens / web) */
+export const MaxContentWidth = 680;
+
+// ─── Typography ───────────────────────────────────────────────────────────────
+
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

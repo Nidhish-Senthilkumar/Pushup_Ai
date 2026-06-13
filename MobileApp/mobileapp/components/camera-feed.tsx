@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, ActivityIndicator, Platform } from "react-native";
-import { Camera, CameraType } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
@@ -14,7 +14,7 @@ export function CameraFeed({ isRecording, onCameraReady }: CameraFeedProps) {
   const videoRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -122,10 +122,9 @@ export function CameraFeed({ isRecording, onCameraReady }: CameraFeedProps) {
         />
       )}
       {Platform.OS !== "web" && permission?.granted && (
-        <Camera
+        <CameraView
           style={styles.cameraView}
-          type={CameraType.front}
-          flashMode={"off" as any}
+          facing="front"
         />
       )}
       {isRecording && (
