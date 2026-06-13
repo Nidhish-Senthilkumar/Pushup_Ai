@@ -10,28 +10,56 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { CameraFeed } from "@/components/camera-feed";
 import { Colors, Spacing } from "@/constants/theme";
+
+type RepResult = {
+  id: number;
+  isGood: boolean;
+};
 
 export default function TrainerScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [feedback, setFeedback] = useState("Record A Pushup!");
   const [status, setStatus] = useState("waiting");
+  const [repResults, setRepResults] = useState<RepResult[]>([]);
+  const [accuracy, setAccuracy] = useState(0);
+  const [improvementTip, setImprovementTip] = useState(
+    "Keep your elbows at roughly 45° and keep your body in a straight line.",
+  );
 
   const handleStartRecording = () => {
     setIsRecording(true);
     setStatus("recording");
     setFeedback("Recording your pushup...");
 
-    // Simulate recording for demo
     setTimeout(() => {
       setIsRecording(false);
       setStatus("analyzing");
       setFeedback("Analyzing your form...");
 
       setTimeout(() => {
+        const generatedResults = Array.from({ length: 6 }, (_, index) => ({
+          id: index + 1,
+          isGood: index !== 2 && index !== 4,
+        }));
+        const goodCount = generatedResults.filter((rep) => rep.isGood).length;
+        const averageAccuracy = Math.round(
+          (goodCount / generatedResults.length) * 100,
+        );
+
+        setRepResults(generatedResults);
+        setAccuracy(averageAccuracy);
         setStatus("complete");
         setFeedback(
-          "Great pushup! Your form was excellent. Keep your elbows close to your body and maintain a straight line from head to heels.",
+          `You completed ${generatedResults.length} pushups with ${averageAccuracy}% form accuracy.`,
+        );
+        setImprovementTip(
+          averageAccuracy >= 85
+            ? "Excellent form — keep your elbows close to your body and stay aligned."
+            : averageAccuracy >= 65
+              ? "Try to keep your hips lower and elbows tucked in for cleaner reps."
+              : "Focus on a straight body line and a controlled lowering phase to improve form.",
         );
       }, 1500);
     }, 3000);
@@ -47,14 +75,28 @@ export default function TrainerScreen() {
 
         {/* Camera Section */}
         <View style={styles.cameraSection}>
-          <ThemedView style={styles.cameraBox}>
-            <ThemedText style={styles.cameraPlaceholder}>
-              📹 Camera Feed
-            </ThemedText>
-            <ThemedText style={styles.cameraSubtext}>
-              (Live pose detection would display here)
-            </ThemedText>
-          </ThemedView>
+          <CameraFeed isRecording={isRecording} />
+
+          <View style={styles.repTrackerSection}>
+            <ThemedText style={styles.repTrackerTitle}>Rep Tracker</ThemedText>
+            <View style={styles.repDotsRow}>
+              {repResults.length > 0 ? (
+                repResults.map((rep) => (
+                  <View
+                    key={rep.id}
+                    style={[
+                      styles.repDot,
+                      rep.isGood ? styles.repDotGood : styles.repDotBad,
+                    ]}
+                  />
+                ))
+              ) : (
+                <ThemedText style={styles.repHintText}>
+                  Start a session to see each rep here.
+                </ThemedText>
+              )}
+            </View>
+          </View>
 
           {/* Recording Button */}
           <Pressable
@@ -108,15 +150,22 @@ export default function TrainerScreen() {
           {status === "complete" && (
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <ThemedText style={styles.statValue}>92%</ThemedText>
-                <ThemedText style={styles.statLabel}>Form Score</ThemedText>
+                <ThemedText style={styles.statValue}>{accuracy}%</ThemedText>
+                <ThemedText style={styles.statLabel}>Form Accuracy</ThemedText>
               </View>
               <View style={styles.statCard}>
-                <ThemedText style={styles.statValue}>2.1s</ThemedText>
-                <ThemedText style={styles.statLabel}>Rep Duration</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {repResults.length}
+                </ThemedText>
+                <ThemedText style={styles.statLabel}>Pushups Logged</ThemedText>
               </View>
             </View>
           )}
+
+          <ThemedView style={styles.tipCard}>
+            <ThemedText style={styles.tipTitle}>How to improve</ThemedText>
+            <ThemedText style={styles.tipText}>{improvementTip}</ThemedText>
+          </ThemedView>
         </ScrollView>
       </ThemedView>
     </SafeAreaView>
@@ -143,6 +192,10 @@ const styles = StyleSheet.create({
   },
   cameraSection: {
     marginBottom: Spacing.four,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: Colors.dark.accent,
   },
   cameraBox: {
     backgroundColor: Colors.dark.backgroundElement,
@@ -160,6 +213,42 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.one,
   },
   cameraSubtext: {
+    color: Colors.dark.textSecondary,
+    fontSize: 12,
+  },
+  repTrackerSection: {
+    backgroundColor: Colors.dark.backgroundElement,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: Colors.dark.background,
+  },
+  repTrackerTitle: {
+    color: Colors.dark.text,
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: Spacing.one,
+  },
+  repDotsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.one,
+    alignItems: "center",
+  },
+  repDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  repDotGood: {
+    backgroundColor: "#27ae60",
+  },
+  repDotBad: {
+    backgroundColor: "#e74c3c",
+  },
+  repHintText: {
     color: Colors.dark.textSecondary,
     fontSize: 12,
   },
@@ -231,6 +320,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: Spacing.three,
     marginVertical: Spacing.two,
+  },
+  tipCard: {
+    backgroundColor: Colors.dark.backgroundElement,
+    borderRadius: 12,
+    padding: Spacing.three,
+    marginTop: Spacing.two,
+    marginBottom: Spacing.four,
+  },
+  tipTitle: {
+    color: Colors.dark.accent,
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: Spacing.one,
+  },
+  tipText: {
+    color: Colors.dark.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
   },
   feedbackText: {
     color: Colors.dark.text,
