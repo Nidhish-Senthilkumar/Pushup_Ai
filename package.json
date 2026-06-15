@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@thinksys/react-native-mediapipe": "^0.0.21"
+  }
+}

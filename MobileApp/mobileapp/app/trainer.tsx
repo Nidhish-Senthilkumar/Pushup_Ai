@@ -7,7 +7,7 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import MediaPipe from "@/components/mediapipe";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { CameraFeed } from "@/components/camera-feed";
@@ -62,7 +62,7 @@ export default function TrainerScreen() {
               : "Focus on a straight body line and a controlled lowering phase to improve form.",
         );
       }, 1500);
-    }, 3000);
+    }, 10000);
   };
 
   return (
@@ -76,7 +76,7 @@ export default function TrainerScreen() {
         {/* Camera Section */}
         <View style={styles.cameraSection}>
           <CameraFeed isRecording={isRecording} />
-
+          <MediaPipe />
           <View style={styles.repTrackerSection}>
             <ThemedText style={styles.repTrackerTitle}>Rep Tracker</ThemedText>
             <View style={styles.repDotsRow}>
@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cameraSection: {
+    height: 560,
     marginBottom: Spacing.four,
     borderRadius: 12,
     overflow: "hidden",

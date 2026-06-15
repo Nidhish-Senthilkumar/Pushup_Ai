@@ -50,13 +50,11 @@ export function CameraFeed({ isRecording, onCameraReady }: CameraFeedProps) {
         }
       };
     } else {
+      // Wait until permission state is known before acting
+      if (permission === null) return;
+
       const initCamera = async () => {
         try {
-          if (!permission) {
-            setIsLoading(false);
-            return;
-          }
-
           if (!permission.granted) {
             const result = await requestPermission();
             if (!result.granted) {
@@ -152,8 +150,8 @@ const styles = StyleSheet.create({
     objectFit: "cover",
   } as any,
   cameraView: {
-    flex: 1,
-    width: "100%",
+    flex: 5,
+    width: "90%",
   },
   loadingOverlay: {
     position: "absolute",
