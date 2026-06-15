@@ -1,176 +1,275 @@
-import React, { useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
   StyleSheet,
   View,
-  Pressable,
   ScrollView,
-  Platform,
+  ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MediaPipe from "@/components/mediapipe";
+import { WebView, WebViewMessageEvent } from "react-native-webview";
+
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { CameraFeed } from "@/components/camera-feed";
 import { Colors, Spacing } from "@/constants/theme";
 
-type RepResult = {
-  id: number;
-  isGood: boolean;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type RNMessage =
+  | { type: "ready" }
+  | { type: "status"; status: "countdown" | "recording" | "analyzing" }
+  | { type: "frame"; count: number }
+  | { type: "result"; class: number | null; label: string; frameCount?: number }
+  | { type: "ai_feedback"; message: string }
+  | { type: "error"; message: string };
+
+type SessionStatus =
+  | "idle"
+  | "countdown"
+  | "recording"
+  | "analyzing"
+  | "complete"
+  | "error";
+
+const CLASS_TIPS: Record<number, string> = {
+  0: "Great work! Keep your elbows close and stay aligned for even cleaner reps.",
+  1: "Try tucking your elbows closer to your torso — about 45° from your body.",
+  2: "Keep your hips level with your shoulders. Squeeze your glutes to hold the plank line.",
+  3: "Straighten your knees and lock your legs — your body should be a rigid plank.",
 };
 
+const STATUS_LABELS: Record<SessionStatus, string> = {
+  idle:      "Ready to record",
+  countdown: "Get ready…",
+  recording: "Recording in progress…",
+  analyzing: "Analysing your form…",
+  complete:  "Analysis complete",
+  error:     "Error",
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function TrainerScreen() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [feedback, setFeedback] = useState("Record A Pushup!");
-  const [status, setStatus] = useState("waiting");
-  const [repResults, setRepResults] = useState<RepResult[]>([]);
-  const [accuracy, setAccuracy] = useState(0);
-  const [improvementTip, setImprovementTip] = useState(
-    "Keep your elbows at roughly 45° and keep your body in a straight line.",
-  );
+  const webviewRef = useRef<WebView>(null);
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    setStatus("recording");
-    setFeedback("Recording your pushup...");
+  const [webviewReady, setWebviewReady] = useState(false);
+  const [status, setStatus]             = useState<SessionStatus>("idle");
+  const [formLabel, setFormLabel]       = useState<string>("");
+  const [aiFeedback, setAiFeedback]     = useState<string>("");
+  const [frameCount, setFrameCount]     = useState(0);
+  const [errorMsg, setErrorMsg]         = useState<string>("");
 
-    setTimeout(() => {
-      setIsRecording(false);
-      setStatus("analyzing");
-      setFeedback("Analyzing your form...");
+  // Handle all postMessage events coming from the WebView HTML
+  const handleMessage = useCallback((event: WebViewMessageEvent) => {
+    let msg: RNMessage;
+    try {
+      msg = JSON.parse(event.nativeEvent.data);
+    } catch {
+      return;
+    }
 
-      setTimeout(() => {
-        const generatedResults = Array.from({ length: 6 }, (_, index) => ({
-          id: index + 1,
-          isGood: index !== 2 && index !== 4,
-        }));
-        const goodCount = generatedResults.filter((rep) => rep.isGood).length;
-        const averageAccuracy = Math.round(
-          (goodCount / generatedResults.length) * 100,
-        );
-
-        setRepResults(generatedResults);
-        setAccuracy(averageAccuracy);
+    switch (msg.type) {
+      case "ready":
+        setWebviewReady(true);
+        setStatus("idle");
+        break;
+      case "status":
+        setStatus(msg.status as SessionStatus);
+        if (msg.status === "recording") setFrameCount(0);
+        break;
+      case "frame":
+        setFrameCount(msg.count);
+        break;
+      case "result":
         setStatus("complete");
-        setFeedback(
-          `You completed ${generatedResults.length} pushups with ${averageAccuracy}% form accuracy.`,
-        );
-        setImprovementTip(
-          averageAccuracy >= 85
-            ? "Excellent form — keep your elbows close to your body and stay aligned."
-            : averageAccuracy >= 65
-              ? "Try to keep your hips lower and elbows tucked in for cleaner reps."
-              : "Focus on a straight body line and a controlled lowering phase to improve form.",
-        );
-      }, 1500);
-    }, 10000);
-  };
+        setFormLabel(msg.label);
+        if (msg.class !== null && msg.class !== undefined) {
+          setAiFeedback(CLASS_TIPS[msg.class] ?? "");
+        } else {
+          setAiFeedback(
+            "Not enough frames were captured. Make sure your whole body is visible to the camera."
+          );
+        }
+        break;
+      case "ai_feedback":
+        if (msg.message) setAiFeedback(msg.message);
+        break;
+      case "error":
+        setStatus("error");
+        setErrorMsg(msg.message);
+        break;
+    }
+  }, []);
+
+  // Trigger recording from the RN side via injected JS
+  const handleStartRecording = useCallback(() => {
+    webviewRef.current?.injectJavaScript("window.rnStartRecording(); true;");
+  }, []);
+
+  const handleStopRecording = useCallback(() => {
+    webviewRef.current?.injectJavaScript("window.rnStopRecording(); true;");
+  }, []);
+
+  const isActive = status === "countdown" || status === "recording";
+
+  // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ThemedView style={styles.wrapper}>
+
         {/* Title */}
         <ThemedText type="title" style={styles.title}>
           AI Trainer
         </ThemedText>
 
-        {/* Camera Section */}
-        <View style={styles.cameraSection}>
-          <CameraFeed isRecording={isRecording} />
-          <MediaPipe />
-          <View style={styles.repTrackerSection}>
-            <ThemedText style={styles.repTrackerTitle}>Rep Tracker</ThemedText>
-            <View style={styles.repDotsRow}>
-              {repResults.length > 0 ? (
-                repResults.map((rep) => (
-                  <View
-                    key={rep.id}
-                    style={[
-                      styles.repDot,
-                      rep.isGood ? styles.repDotGood : styles.repDotBad,
-                    ]}
-                  />
-                ))
-              ) : (
-                <ThemedText style={styles.repHintText}>
-                  Start a session to see each rep here.
-                </ThemedText>
-              )}
-            </View>
-          </View>
+        {/* WebView — Metro bundles the HTML file via require() */}
+        <View style={styles.webviewContainer}>
+          <WebView
+            ref={webviewRef}
+            source={require("../assets/trainer-webview.html")}
+            style={styles.webview}
+            onMessage={handleMessage}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback
+            javaScriptEnabled
+            domStorageEnabled
+            originWhitelist={["*"]}
+            mixedContentMode="always"
+            onError={(e) => {
+              setStatus("error");
+              setErrorMsg(e.nativeEvent.description);
+            }}
+          />
 
-          {/* Recording Button */}
-          <Pressable
-            style={[
-              styles.recordButton,
-              isRecording && styles.recordButtonActive,
-            ]}
-            onPress={handleStartRecording}
-            disabled={isRecording}
-          >
-            <ThemedText
-              style={[
-                styles.recordButtonText,
-                isRecording && styles.recordButtonTextActive,
-              ]}
-            >
-              {isRecording ? "● Recording..." : "▶ Start Recording"}
-            </ThemedText>
-          </Pressable>
-        </View>
-
-        {/* Feedback Panel */}
-        <ScrollView style={styles.feedbackPanel}>
-          <ThemedText style={styles.feedbackTitle}>AI Coach</ThemedText>
-
-          {/* Status Indicator */}
-          <View style={styles.statusContainer}>
-            <View
-              style={[
-                styles.statusDot,
-                status === "waiting" && styles.dotWaiting,
-                status === "recording" && styles.dotRecording,
-                status === "analyzing" && styles.dotAnalyzing,
-                status === "complete" && styles.dotComplete,
-              ]}
-            />
-            <ThemedText style={styles.statusText}>
-              {status === "waiting" && "Ready to record"}
-              {status === "recording" && "Recording in progress..."}
-              {status === "analyzing" && "Analyzing your form..."}
-              {status === "complete" && "Analysis complete"}
-            </ThemedText>
-          </View>
-
-          {/* Feedback Text */}
-          <ThemedView style={styles.feedbackContent}>
-            <ThemedText style={styles.feedbackText}>{feedback}</ThemedText>
-          </ThemedView>
-
-          {/* Stats Section */}
-          {status === "complete" && (
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <ThemedText style={styles.statValue}>{accuracy}%</ThemedText>
-                <ThemedText style={styles.statLabel}>Form Accuracy</ThemedText>
-              </View>
-              <View style={styles.statCard}>
-                <ThemedText style={styles.statValue}>
-                  {repResults.length}
-                </ThemedText>
-                <ThemedText style={styles.statLabel}>Pushups Logged</ThemedText>
-              </View>
+          {/* Loading overlay until MediaPipe signals it's ready */}
+          {!webviewReady && (
+            <View style={styles.webviewOverlay}>
+              <ActivityIndicator size="large" color={Colors.dark.accent} />
+              <ThemedText style={styles.loadingText}>
+                Initialising MediaPipe…
+              </ThemedText>
             </View>
           )}
 
-          <ThemedView style={styles.tipCard}>
-            <ThemedText style={styles.tipTitle}>How to improve</ThemedText>
-            <ThemedText style={styles.tipText}>{improvementTip}</ThemedText>
-          </ThemedView>
+          {/* Live frame counter badge while recording */}
+          {status === "recording" && (
+            <View style={styles.frameBadge}>
+              <ThemedText style={styles.frameBadgeText}>
+                {frameCount} frames
+              </ThemedText>
+            </View>
+          )}
+        </View>
+
+        {/* Status row */}
+        <View style={styles.statusRow}>
+          <View
+            style={[
+              styles.statusDot,
+              status === "idle"      && styles.dotIdle,
+              status === "countdown" && styles.dotCountdown,
+              status === "recording" && styles.dotRecording,
+              status === "analyzing" && styles.dotAnalyzing,
+              status === "complete"  && styles.dotComplete,
+              status === "error"     && styles.dotError,
+            ]}
+          />
+          <ThemedText style={styles.statusLabel}>
+            {STATUS_LABELS[status]}
+          </ThemedText>
+        </View>
+
+        {/* Record / Stop button — shown once the WebView is ready */}
+        {webviewReady && (
+          <Pressable
+            style={[
+              styles.recordButton,
+              isActive && styles.recordButtonActive,
+            ]}
+            onPress={isActive ? handleStopRecording : handleStartRecording}
+            disabled={status === "analyzing"}
+          >
+            <ThemedText style={styles.recordButtonText}>
+              {status === "countdown"
+                ? "⏳ Get ready…"
+                : status === "recording"
+                ? "■ Stop Recording"
+                : "▶ Start Recording"}
+            </ThemedText>
+          </Pressable>
+        )}
+
+        {/* Feedback panel */}
+        <ScrollView
+          style={styles.feedbackPanel}
+          contentContainerStyle={styles.feedbackContent}
+        >
+          <ThemedText style={styles.feedbackTitle}>AI Coach</ThemedText>
+
+          {status === "error" && (
+            <ThemedView style={[styles.resultCard, styles.resultCardBad]}>
+              <ThemedText style={styles.resultLabel}>⚠ Error</ThemedText>
+              <ThemedText style={styles.resultSub}>{errorMsg}</ThemedText>
+            </ThemedView>
+          )}
+
+          {status === "complete" && formLabel !== "" && (
+            <ThemedView
+              style={[
+                styles.resultCard,
+                formLabel.startsWith("✓")
+                  ? styles.resultCardGood
+                  : styles.resultCardBad,
+              ]}
+            >
+              <ThemedText style={styles.resultLabel}>{formLabel}</ThemedText>
+            </ThemedView>
+          )}
+
+          {aiFeedback !== "" && status === "complete" && (
+            <ThemedView style={styles.tipCard}>
+              <ThemedText style={styles.tipTitle}>How to improve</ThemedText>
+              <ThemedText style={styles.tipText}>{aiFeedback}</ThemedText>
+            </ThemedView>
+          )}
+
+          {(status === "idle" || status === "countdown") && (
+            <ThemedView style={styles.tipCard}>
+              <ThemedText style={styles.tipTitle}>Tips</ThemedText>
+              <ThemedText style={styles.tipText}>
+                Position your whole body in frame. Keep your elbows at ~45°
+                and maintain a straight line from head to heels.
+              </ThemedText>
+            </ThemedView>
+          )}
+
+          {status === "recording" && (
+            <ThemedView style={styles.tipCard}>
+              <ThemedText style={styles.tipTitle}>Recording…</ThemedText>
+              <ThemedText style={styles.tipText}>
+                {frameCount} frames captured so far. Recording stops
+                automatically after 15 seconds, or press Stop early.
+              </ThemedText>
+            </ThemedView>
+          )}
+
+          {status === "analyzing" && (
+            <View style={styles.analyzingRow}>
+              <ActivityIndicator color={Colors.dark.accent} />
+              <ThemedText style={styles.analyzingText}>
+                Sending {frameCount} frames to Flask…
+              </ThemedText>
+            </View>
+          )}
         </ScrollView>
+
       </ThemedView>
     </SafeAreaView>
   );
 }
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -187,98 +286,104 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     color: Colors.dark.accent,
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.three,
     textAlign: "center",
   },
-  cameraSection: {
-    height: 560,
-    marginBottom: Spacing.four,
+
+  // ── WebView ────────────────────────────────────────────────────────────
+  webviewContainer: {
+    height: 280,
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: Colors.dark.accent,
-  },
-  cameraBox: {
+    marginBottom: Spacing.three,
     backgroundColor: Colors.dark.backgroundElement,
-    borderRadius: 12,
-    height: 300,
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  webviewOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.dark.backgroundElement,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.three,
-    borderWidth: 2,
-    borderColor: Colors.dark.accent,
-    opacity: 0.8,
+    gap: 12,
+    zIndex: 10,
   },
-  cameraPlaceholder: {
-    fontSize: 48,
-    marginBottom: Spacing.one,
-  },
-  cameraSubtext: {
+  loadingText: {
     color: Colors.dark.textSecondary,
-    fontSize: 12,
-  },
-  repTrackerSection: {
-    backgroundColor: Colors.dark.backgroundElement,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderTopWidth: 1,
-    borderTopColor: Colors.dark.background,
-  },
-  repTrackerTitle: {
-    color: Colors.dark.text,
     fontSize: 13,
+    marginTop: 8,
+  },
+  frameBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "rgba(60,135,247,0.85)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    zIndex: 20,
+  },
+  frameBadgeText: {
+    color: "#fff",
+    fontSize: 11,
     fontWeight: "700",
-    marginBottom: Spacing.one,
   },
-  repDotsRow: {
+
+  // ── Status row ──────────────────────────────────────────────────────────
+  statusRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.one,
     alignItems: "center",
+    marginBottom: Spacing.two,
+    gap: Spacing.one,
   },
-  repDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  repDotGood: {
-    backgroundColor: "#27ae60",
-  },
-  repDotBad: {
-    backgroundColor: "#e74c3c",
-  },
-  repHintText: {
+  dotIdle:      { backgroundColor: Colors.dark.textSecondary },
+  dotCountdown: { backgroundColor: "#f39c12" },
+  dotRecording: { backgroundColor: "#e74c3c" },
+  dotAnalyzing: { backgroundColor: "#f39c12" },
+  dotComplete:  { backgroundColor: "#27ae60" },
+  dotError:     { backgroundColor: "#e74c3c" },
+  statusLabel: {
     color: Colors.dark.textSecondary,
     fontSize: 12,
   },
+
+  // ── Record button ───────────────────────────────────────────────────────
   recordButton: {
     backgroundColor: Colors.dark.accent,
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: Spacing.three,
   },
   recordButtonActive: {
     backgroundColor: "#e74c3c",
-    opacity: 0.8,
   },
   recordButtonText: {
-    color: Colors.dark.background,
+    color: "#fff",
     fontSize: 16,
     fontWeight: "700",
   },
-  recordButtonTextActive: {
-    color: Colors.dark.text,
-  },
+
+  // ── Feedback panel ──────────────────────────────────────────────────────
   feedbackPanel: {
     flex: 1,
     backgroundColor: Colors.dark.backgroundElement,
     borderRadius: 12,
+  },
+  feedbackContent: {
     padding: Spacing.three,
-    marginTop: Spacing.three,
+    gap: Spacing.two,
   },
   feedbackTitle: {
     fontSize: 18,
@@ -286,48 +391,28 @@ const styles = StyleSheet.create({
     color: Colors.dark.accent,
     marginBottom: Spacing.two,
   },
-  statusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.two,
-    paddingBottom: Spacing.two,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.backgroundSelected,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: Spacing.two,
-  },
-  dotWaiting: {
-    backgroundColor: Colors.dark.textSecondary,
-  },
-  dotRecording: {
-    backgroundColor: "#e74c3c",
-  },
-  dotAnalyzing: {
-    backgroundColor: "#f39c12",
-  },
-  dotComplete: {
-    backgroundColor: "#27ae60",
-  },
-  statusText: {
-    color: Colors.dark.textSecondary,
-    fontSize: 12,
-  },
-  feedbackContent: {
-    backgroundColor: Colors.dark.background,
-    borderRadius: 8,
+  resultCard: {
+    borderRadius: 10,
     padding: Spacing.three,
-    marginVertical: Spacing.two,
+    marginBottom: Spacing.two,
+  },
+  resultCardGood: { backgroundColor: "#1a4731" },
+  resultCardBad:  { backgroundColor: "#4a1a1a" },
+  resultLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  resultSub: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 4,
   },
   tipCard: {
-    backgroundColor: Colors.dark.backgroundElement,
-    borderRadius: 12,
+    backgroundColor: Colors.dark.background,
+    borderRadius: 10,
     padding: Spacing.three,
-    marginTop: Spacing.two,
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.two,
   },
   tipTitle: {
     color: Colors.dark.accent,
@@ -338,36 +423,16 @@ const styles = StyleSheet.create({
   tipText: {
     color: Colors.dark.textSecondary,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
   },
-  feedbackText: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  statsGrid: {
+  analyzingRow: {
     flexDirection: "row",
-    gap: Spacing.two,
-    marginTop: Spacing.three,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-    borderRadius: 8,
-    padding: Spacing.three,
     alignItems: "center",
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.dark.accent,
+    gap: Spacing.two,
+    padding: Spacing.two,
   },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.dark.accent,
-    marginBottom: Spacing.one,
-  },
-  statLabel: {
-    fontSize: 11,
+  analyzingText: {
     color: Colors.dark.textSecondary,
-    textAlign: "center",
+    fontSize: 13,
   },
 });

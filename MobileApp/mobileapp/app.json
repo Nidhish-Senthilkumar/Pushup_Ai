@@ -1,5 +1,6 @@
 {
   "expo": {
+    "assetBundlePatterns": ["assets/**"],
     "name": "mobileapp",
     "slug": "mobileapp",
     "version": "1.0.0",
@@ -39,7 +40,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

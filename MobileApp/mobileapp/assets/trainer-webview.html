@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Push-Up AI Trainer</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        background: #111;
+        font-family: Arial, Helvetica, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Camera box fills top portion */
+      .camera-box {
+        position: relative;
+        flex: 1;
+        background: #000;
+        overflow: hidden;
+      }
+
+      .camera-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        /* Mirror front camera so it feels natural */
+        transform: scaleX(-1);
+      }
+
+      /* Landmark canvas sits on top of video */
+      #overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        /* Also mirrored to match video */
+        transform: scaleX(-1);
+      }
+
+      /* Countdown shown in centre during 3-2-1 */
+      .countdown {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font-size: 72px;
+        font-weight: 700;
+        padding: 18px 32px;
+        border-radius: 12px;
+        z-index: 12;
+        display: none;
+        min-width: 120px;
+        text-align: center;
+      }
+      .countdown.show { display: block; }
+
+      /* REC badge top-right */
+      #recBadge {
+        display: none;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(231, 76, 60, 0.9);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 6px;
+        z-index: 20;
+        letter-spacing: 1px;
+      }
+
+      /* Bottom bar with button + status */
+      .bottom-bar {
+        background: #1c1c1c;
+        padding: 14px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-top: 2px solid #3498db;
+      }
+
+      #statusText {
+        color: #9BA1A6;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      #startBtn {
+        background: #3498db;
+        color: #fff;
+        border: none;
+        padding: 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 16px;
+        width: 100%;
+        letter-spacing: 0.5px;
+      }
+      #startBtn:disabled {
+        background: #444;
+        color: #777;
+        cursor: not-allowed;
+      }
+      #startBtn.recording {
+        background: #e74c3c;
+      }
+
+      /* Error banner */
+      #errorBanner {
+        display: none;
+        background: #c0392b;
+        color: #fff;
+        font-size: 13px;
+        text-align: center;
+        padding: 8px 12px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="camera-box">
+      <video id="input_video" class="camera-video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="countdownOverlay" class="countdown"></div>
+      <div id="recBadge">● REC</div>
+    </div>
+
+    <div id="errorBanner"></div>
+
+    <div class="bottom-bar">
+      <div id="statusText">Loading model…</div>
+      <button id="startBtn" disabled>Loading…</button>
+    </div>
+
+    <!-- TensorFlow + MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script>
+      // ─── DOM refs ────────────────────────────────────────────────────────────
+      const startBtn         = document.getElementById("startBtn");
+      const statusText       = document.getElementById("statusText");
+      const videoElement     = document.getElementById("input_video");
+      const overlay          = document.getElementById("overlay");
+      const overlayCtx       = overlay.getContext("2d");
+      const countdownOverlay = document.getElementById("countdownOverlay");
+      const recBadge         = document.getElementById("recBadge");
+      const errorBanner      = document.getElementById("errorBanner");
+
+      // ─── State ───────────────────────────────────────────────────────────────
+      let camera          = null;
+      let pose            = null;
+      let recording       = false;
+      let collectedFrames = [];
+
+      // ─── postMessage helper → React Native ──────────────────────────────────
+      // Falls back to console.log when running in a plain browser (useful for
+      // testing the HTML file directly in Chrome during development).
+      function sendToRN(payload) {
+        const msg = JSON.stringify(payload);
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(msg);
+        } else {
+          console.log("[RN message]", msg);
+        }
+      }
+
+      function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.style.display = "block";
+        sendToRN({ type: "error", message: msg });
+      }
+
+      // ─── Angle calculation ───────────────────────────────────────────────────
+      function calculateAngle(a, b, c) {
+        const ba = [a[0] - b[0], a[1] - b[1]];
+        const bc = [c[0] - b[0], c[1] - b[1]];
+        const dot = ba[0] * bc[0] + ba[1] * bc[1];
+        const magBA = Math.sqrt(ba[0] ** 2 + ba[1] ** 2);
+        const magBC = Math.sqrt(bc[0] ** 2 + bc[1] ** 2);
+        const cosAngle = Math.max(-1, Math.min(1, dot / (magBA * magBC)));
+        return Math.acos(cosAngle) * (180 / Math.PI);
+      }
+
+      // ─── Feature extraction (matches your Python training code) ─────────────
+      function extractFeatures(landmarks) {
+        if (!landmarks || landmarks.length < 33) return null;
+
+        const r_shoulder = [landmarks[12].x, landmarks[12].y];
+        const r_elbow    = [landmarks[14].x, landmarks[14].y];
+        const r_wrist    = [landmarks[16].x, landmarks[16].y];
+        const r_hip      = [landmarks[24].x, landmarks[24].y];
+        const r_knee     = [landmarks[26].x, landmarks[26].y];
+        const r_ankle    = [landmarks[28].x, landmarks[28].y];
+
+        const l_shoulder = [landmarks[11].x, landmarks[11].y];
+        const l_elbow    = [landmarks[13].x, landmarks[13].y];
+        const l_wrist    = [landmarks[15].x, landmarks[15].y];
+        const l_hip      = [landmarks[23].x, landmarks[23].y];
+        const l_knee     = [landmarks[25].x, landmarks[25].y];
+        const l_ankle    = [landmarks[27].x, landmarks[27].y];
+
+        const m_hip      = [(r_hip[0] + l_hip[0]) / 2,           (r_hip[1] + l_hip[1]) / 2];
+        const m_knee     = [(r_knee[0] + l_knee[0]) / 2,         (r_knee[1] + l_knee[1]) / 2];
+        const m_shoulder = [(r_shoulder[0] + l_shoulder[0]) / 2, (r_shoulder[1] + l_shoulder[1]) / 2];
+
+        const r_shoulderAngle = 180 - calculateAngle(r_hip, r_shoulder, r_elbow);
+        const l_shoulderAngle = 180 - calculateAngle(l_hip, l_shoulder, l_elbow);
+        const hipAngle        = calculateAngle(m_knee, m_hip, m_shoulder);
+        const r_kneeAngle     = calculateAngle(r_hip, r_knee, r_ankle);
+        const l_kneeAngle     = calculateAngle(l_hip, l_knee, l_ankle);
+        const r_elbowAngle    = calculateAngle(r_wrist, r_elbow, r_shoulder);
+        const l_elbowAngle    = calculateAngle(l_wrist, l_elbow, l_shoulder);
+
+        const m_shoulderAngle = (r_shoulderAngle + l_shoulderAngle) / 2;
+        const m_elbowAngle    = (r_elbowAngle + l_elbowAngle) / 2;
+        const m_kneeAngle     = (r_kneeAngle + l_kneeAngle) / 2;
+
+        // Only capture frames where the elbow is actually bent (i.e. mid-rep)
+        if (r_elbowAngle < 140) {
+          return [hipAngle, m_shoulderAngle, m_elbowAngle, m_kneeAngle];
+        }
+        return null;
+      }
+
+      // ─── Landmark drawing ────────────────────────────────────────────────────
+      function drawPose(landmarks) {
+        if (!overlayCtx || !landmarks) return;
+
+        // Resize canvas to match video on every frame (handles orientation changes)
+        overlay.width  = videoElement.videoWidth  || overlay.clientWidth;
+        overlay.height = videoElement.videoHeight || overlay.clientHeight;
+
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+        const connections = [
+          [11, 13], [13, 15],   // left arm
+          [12, 14], [14, 16],   // right arm
+          [11, 12],             // shoulders
+          [23, 24],             // hips
+          [11, 23], [12, 24],   // torso sides
+          [23, 25], [25, 27],   // left leg
+          [24, 26], [26, 28],   // right leg
+        ];
+
+        overlayCtx.strokeStyle = "lime";
+        overlayCtx.lineWidth   = 3;
+        overlayCtx.fillStyle   = "lime";
+
+        for (const [a, b] of connections) {
+          const p1 = landmarks[a];
+          const p2 = landmarks[b];
+          if (p1 && p2) {
+            overlayCtx.beginPath();
+            overlayCtx.moveTo(p1.x * overlay.width, p1.y * overlay.height);
+            overlayCtx.lineTo(p2.x * overlay.width, p2.y * overlay.height);
+            overlayCtx.stroke();
+          }
+        }
+
+        landmarks.forEach((lm) => {
+          if (lm) {
+            overlayCtx.beginPath();
+            overlayCtx.arc(lm.x * overlay.width, lm.y * overlay.height, 5, 0, 2 * Math.PI);
+            overlayCtx.fill();
+          }
+        });
+      }
+
+      // ─── MediaPipe onResults callback ────────────────────────────────────────
+      function onResults(results) {
+        if (results.poseLandmarks) {
+          drawPose(results.poseLandmarks);
+
+          if (recording) {
+            collectedFrames.push({
+              timestamp: Date.now(),
+              landmarks: results.poseLandmarks,
+            });
+
+            // Live frame count back to RN so the UI can pulse
+            sendToRN({ type: "frame", count: collectedFrames.length });
+          }
+        } else {
+          // Clear canvas when no person detected
+          overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+        }
+      }
+
+      // ─── Send frames to Flask for classification ──────────────────────────
+      async function classifySequence(frames) {
+        const FLASK_URL = "http://localhost:5000/predict";
+        const SEQUENCE_LENGTH = 30;
+
+        const features = frames
+          .map((f) => (f.landmarks ? extractFeatures(f.landmarks) : null))
+          .filter((f) => f !== null);
+
+        if (features.length < SEQUENCE_LENGTH) {
+          return null; // Not enough data
+        }
+
+        // Build non-overlapping windows of 30 frames
+        const seq_arr = [];
+        for (let i = 0; i + SEQUENCE_LENGTH <= features.length; i += SEQUENCE_LENGTH) {
+          seq_arr.push(features.slice(i, i + SEQUENCE_LENGTH));
+        }
+
+        const response = await fetch(FLASK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ features: seq_arr }),
+        });
+
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        return await response.json();
+      }
+
+      // ─── Countdown helper (3-2-1 before recording) ───────────────────────
+      function runCountdown(seconds) {
+        return new Promise((resolve) => {
+          let remaining = seconds;
+
+          const tick = () => {
+            if (remaining <= 0) {
+              countdownOverlay.classList.remove("show");
+              countdownOverlay.textContent = "";
+              resolve();
+              return;
+            }
+            countdownOverlay.textContent = remaining;
+            countdownOverlay.classList.add("show");
+            remaining--;
+            setTimeout(tick, 1000);
+          };
+
+          tick();
+        });
+      }
+
+      // ─── Start recording ─────────────────────────────────────────────────
+      async function startRecording() {
+        if (recording) return;
+
+        startBtn.disabled = true;
+        statusText.textContent = "Get ready…";
+        sendToRN({ type: "status", status: "countdown" });
+
+        await runCountdown(3);
+
+        recording       = true;
+        collectedFrames = [];
+        recBadge.style.display = "block";
+        startBtn.classList.add("recording");
+        statusText.textContent = "Recording… hold your pushup position";
+        sendToRN({ type: "status", status: "recording" });
+
+        // Auto-stop after 15 seconds (same as website)
+        setTimeout(stopRecording, 15000);
+      }
+
+      // ─── Stop recording + classify ────────────────────────────────────────
+      async function stopRecording() {
+        if (!recording) return;
+
+        recording = false;
+        recBadge.style.display = "none";
+        startBtn.classList.remove("recording");
+        statusText.textContent = "Analysing your form…";
+        sendToRN({ type: "status", status: "analyzing" });
+
+        try {
+          const result = await classifySequence(collectedFrames);
+
+          const CLASS_LABELS = {
+            0: "✓ Good form!",
+            1: "⚠ Keep elbows closer to body",
+            2: "⚠ Lower your hips",
+            3: "⚠ Bring your knees up",
+          };
+
+          if (result) {
+            const label = CLASS_LABELS[result.class] ?? "Unknown";
+            statusText.textContent = label;
+            sendToRN({
+              type:       "result",
+              class:      result.class,
+              label,
+              frameCount: collectedFrames.length,
+            });
+
+            // Also ask AI for feedback text
+            try {
+              const aiResp = await fetch("http://localhost:5000/askai", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({ pred_class: label }),
+              });
+              const aiData = await aiResp.json();
+              sendToRN({ type: "ai_feedback", message: aiData.message });
+            } catch (_) {
+              // AI feedback is optional — don't block on it
+            }
+          } else {
+            statusText.textContent = "Not enough frames — try again";
+            sendToRN({ type: "result", class: null, label: "Not enough data" });
+          }
+        } catch (err) {
+          statusText.textContent = "Could not reach server";
+          showError("Flask server unreachable: " + err.message);
+        }
+
+        startBtn.textContent  = "▶ Start Recording";
+        startBtn.disabled     = false;
+      }
+
+      // ─── Init MediaPipe + Camera ──────────────────────────────────────────
+      async function init() {
+        try {
+          pose = new Pose({
+            locateFile: (file) =>
+              `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`,
+          });
+
+          pose.setOptions({
+            modelComplexity:      1,
+            smoothLandmarks:      true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence:  0.5,
+          });
+
+          pose.onResults(onResults);
+
+          camera = new Camera(videoElement, {
+            onFrame: async () => {
+              await pose.send({ image: videoElement });
+            },
+            width:  640,
+            height: 480,
+          });
+
+          await camera.start();
+
+          // Ready!
+          startBtn.textContent = "▶ Start Recording";
+          startBtn.disabled    = false;
+          statusText.textContent = "Model ready — press Start when in position";
+          sendToRN({ type: "ready" });
+
+        } catch (err) {
+          showError("Failed to start camera/model: " + err.message);
+          statusText.textContent = "Error — see banner above";
+        }
+      }
+
+      // ─── Wire up button ───────────────────────────────────────────────────
+      startBtn.addEventListener("click", () => {
+        if (!recording) startRecording();
+        else            stopRecording();
+      });
+
+      // Allow React Native to trigger start/stop via injectedJavaScript
+      window.rnStartRecording = startRecording;
+      window.rnStopRecording  = stopRecording;
+
+      // ─── Boot ─────────────────────────────────────────────────────────────
+      init();
+    </script>
+  </body>
+</html>
