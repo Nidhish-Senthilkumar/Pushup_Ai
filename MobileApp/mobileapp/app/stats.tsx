@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing } from "@/constants/theme";
+import PushupDataSave from '@/components/pushupDataSave'; // Adjust the path if needed
 
 export default function StatsScreen() {
   const [stats] = useState({
@@ -132,6 +133,7 @@ export default function StatsScreen() {
             • Lower until your chest nearly touches the ground
           </ThemedText>
         </ThemedView>
+        <PushupDataSave />
       </ScrollView>
     </SafeAreaView>
   );

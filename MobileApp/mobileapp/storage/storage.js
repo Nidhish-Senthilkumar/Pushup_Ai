@@ -1,6 +1,6 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
-// This defines the private path on the phone where the file lives
+// path of file
 const fileUri = FileSystem.documentDirectory + 'pushup_history.json';
 
 /**
@@ -23,9 +23,7 @@ export const saveWorkoutToFile = async (newSession, existingHistory) => {
   }
 };
 
-/**
- * Loads the push-up history from the file.
- */
+
 export const loadHistoryFromFile = async () => {
   try {
     const fileInfo = await FileSystem.getInfoAsync(fileUri);
@@ -42,9 +40,7 @@ export const loadHistoryFromFile = async () => {
   }
 };
 
-/**
- * Clears the file completely (Useful for testing/resetting)
- */
+
 export const clearHistoryFile = async () => {
   try {
     await FileSystem.deleteAsync(fileUri, { idempotent: true });
