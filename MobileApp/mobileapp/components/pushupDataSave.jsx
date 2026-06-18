@@ -24,19 +24,45 @@ export default function PushupDataSave() {
     initLoad();
   }, []);
 
-  // Simulates a successful workout from the AI tracking system
+  // Simulates a standard successful workout from the AI tracking system
   const handleWorkoutComplete = async (pushupCount, pointsEarned) => {
     const newSession = {
       id: Date.now().toString(), // Unique ID for each workout item
       date: new Date().toLocaleDateString(),
       count: pushupCount,
       points: pointsEarned,
+      reps: null // Fallback placeholder for standard quick sessions
     };
 
     const updatedList = await saveWorkoutToFile(newSession, history);
     setHistory(updatedList); 
     setFileRawText(JSON.stringify(updatedList, null, 2)); // Update raw viewer
     Alert.alert("Workout Saved!", `Recorded ${pushupCount} pushups.`);
+  };
+
+  // Advanced Stream Simulator: Translates model training frame sequences into Gemini Payloads
+  const handleSimulateModelWorkout = async () => {
+    // These metrics isolate the key form boundary nodes present within your raw array sequences
+    const parsedReps = [
+      { repNumber: 1, lowestElbowAngle: 63.9, highestElbowAngle: 179.5 },
+      { repNumber: 2, lowestElbowAngle: 51.7, highestElbowAngle: 179.7 },
+      { repNumber: 3, lowestElbowAngle: 51.9, highestElbowAngle: 179.9 }
+    ];
+
+    const newSession = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString(),
+      count: parsedReps.length,
+      points: parsedReps.length * 100,
+      reps: parsedReps,
+      // Target text property populated directly by your teammate's Gemini API output block
+      geminiFeedback: "Excellent execution throughout this set! Your depth surpassed the standard 90° requirement comfortably, averaging around 55° at your lowest points. Great extension control on the lockouts."
+    };
+
+    const updatedList = await saveWorkoutToFile(newSession, history);
+    setHistory(updatedList); 
+    setFileRawText(JSON.stringify(updatedList, null, 2));
+    Alert.alert("AI Set Processed", "Model frame analytics converted to history logs!");
   };
 
   // Deletes just ONE specific workout line item when pressed and held
@@ -87,11 +113,19 @@ export default function PushupDataSave() {
       {/* DEVELOPER SIMULATOR CARD */}
       <ThemedView style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Developer Tools</ThemedText>
+        
         <TouchableOpacity 
           style={styles.primaryButton} 
           onPress={() => handleWorkoutComplete(25, 250)}
         >
-          <ThemedText style={styles.buttonText}>+ Simulate AI Workout (25 Reps)</ThemedText>
+          <ThemedText style={styles.buttonText}>+ Simulate Standard Workout (25 Reps)</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.primaryButton, { marginTop: Spacing.one }]} 
+          onPress={handleSimulateModelWorkout}
+        >
+          <ThemedText style={styles.buttonText}>⚡ Process AI Model Training Metrics</ThemedText>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.dangerButton} onPress={handleClearWithWarning}>
@@ -111,25 +145,58 @@ export default function PushupDataSave() {
             if (!session) return null;
 
             return (
-              <TouchableOpacity 
-                key={session.id || index} 
-                onLongPress={() => handleDeleteItem(session.id)} 
-                delayLongPress={600} 
-                style={[
-                  styles.historyItem,
-                  index !== history.length - 1 && styles.itemBorder
-                ]}
-              >
-                <View style={styles.historyLeft}>
-                  <ThemedText style={styles.historyDate}>{session.date || "Unknown Date"}</ThemedText>
-                  <ThemedText style={styles.historyDetails}>
-                    {session.count ?? 0} reps • <ThemedText style={styles.holdText}>Hold to delete</ThemedText>
-                  </ThemedText>
-                </View>
-                <View style={styles.scoreBadge}>
-                  <ThemedText style={styles.scoreText}>+{session.points ?? 0} PTS</ThemedText>
-                </View>
-              </TouchableOpacity>
+              <ThemedView key={session.id || index} style={styles.workoutCardWrapper}>
+                <TouchableOpacity 
+                  onLongPress={() => handleDeleteItem(session.id)} 
+                  delayLongPress={600} 
+                  style={[
+                    styles.historyItem,
+                    session.reps && styles.itemBorder
+                  ]}
+                >
+                  <View style={styles.historyLeft}>
+                    <ThemedText style={styles.historyDate}>{session.date || "Unknown Date"}</ThemedText>
+                    <ThemedText style={styles.historyDetails}>
+                      {session.count ?? 0} reps • <ThemedText style={styles.holdText}>Hold to delete</ThemedText>
+                    </ThemedText>
+                  </View>
+                  <View style={styles.scoreBadge}>
+                    <ThemedText style={styles.scoreText}>+{session.points ?? 0} PTS</ThemedText>
+                  </View>
+                </TouchableOpacity>
+
+                {/* DYNAMIC METRIC GENERATION SECTION */}
+                {session.reps && (
+                  <View style={styles.repContainer}>
+                    {session.reps.map((rep, rIdx) => {
+                      const incompleteDepth = rep.lowestElbowAngle > 95;
+                      const incompleteExtension = rep.highestElbowAngle < 165;
+
+                      return (
+                        <View key={rIdx} style={styles.repRow}>
+                          <ThemedText style={styles.repNumberText}>Rep {rep.repNumber}</ThemedText>
+                          <View style={styles.angleStats}>
+                            <ThemedText style={[styles.angleLabel, incompleteDepth && styles.badAngle]}>
+                              ⬇️ Drop: {Math.round(rep.lowestElbowAngle)}°
+                            </ThemedText>
+                            <ThemedText style={[styles.angleLabel, incompleteExtension && styles.badAngle]}>
+                              ⬆️ Peak: {Math.round(rep.highestElbowAngle)}°
+                            </ThemedText>
+                          </View>
+                        </View>
+                      );
+                    })}
+
+                    {/* GEMINI TARGETED COACHING WRAPPER */}
+                    <View style={styles.geminiBox}>
+                      <ThemedText style={styles.geminiTitle}>✨ AI Insights (Gemini Advice)</ThemedText>
+                      <ThemedText style={styles.geminiText}>
+                        {session.geminiFeedback || '"Formatting data arrays for telemetry feedback evaluation..."'}
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+              </ThemedView>
             );
           })
         )}
@@ -189,6 +256,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: Spacing.two,
   },
+  workoutCardWrapper: {
+    backgroundColor: Colors.dark.background,
+    borderRadius: 8,
+    paddingHorizontal: Spacing.two,
+    paddingBottom: Spacing.two,
+    marginBottom: Spacing.two,
+    borderColor: '#222',
+    borderWidth: 1,
+  },
   historyItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -197,7 +273,8 @@ const styles = StyleSheet.create({
   },
   itemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.background,
+    borderBottomColor: Colors.dark.backgroundElement,
+    marginBottom: Spacing.one,
   },
   historyLeft: {
     flex: 1,
@@ -228,6 +305,52 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#27ae60',
+  },
+  repContainer: {
+    paddingVertical: 4,
+  },
+  repRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  repNumberText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.dark.text,
+  },
+  angleStats: {
+    flexDirection: 'row',
+  },
+  angleLabel: {
+    fontSize: 12,
+    color: Colors.dark.textSecondary,
+    marginLeft: Spacing.three,
+  },
+  badAngle: {
+    color: '#e74c3c',
+    fontWeight: '600',
+  },
+  geminiBox: {
+    backgroundColor: Colors.dark.backgroundElement,
+    borderColor: '#333',
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 10,
+    marginTop: Spacing.two,
+  },
+  geminiTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#00adb5',
+    marginBottom: 4,
+  },
+  geminiText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#ececec',
+    lineHeight: 16,
   },
   displayBox: {
     backgroundColor: Colors.dark.background,
