@@ -1,6 +1,8 @@
 {
   "expo": {
-    "assetBundlePatterns": ["assets/**"],
+    "assetBundlePatterns": [
+      "assets/**"
+    ],
     "name": "mobileapp",
     "slug": "mobileapp",
     "version": "1.0.0",
@@ -41,7 +43,8 @@
           }
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "react-native-fast-tflite"
     ],
     "experiments": {
       "typedRoutes": true,

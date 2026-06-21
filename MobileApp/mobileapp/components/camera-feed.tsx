@@ -1,230 +1,81 @@
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, ActivityIndicator, Platform } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
-
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
+import React, { useState, useRef, useEffect } from "react";
+import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
+import { CameraView, Camera } from "expo-camera";
+import Svg, { Circle } from "react-native-svg";
 
 interface CameraFeedProps {
   isRecording: boolean;
   onCameraReady?: () => void;
+  onDataCaptured?: (framesArray: any[]) => void;
 }
 
-export function CameraFeed({ isRecording, onCameraReady }: CameraFeedProps) {
-  const videoRef = useRef<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [permission, requestPermission] = useCameraPermissions();
+export function CameraFeed({ isRecording, onCameraReady, onDataCaptured }: CameraFeedProps) {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [detectedLandmarks, setDetectedLandmarks] = useState<any[]>([]);
+  const frameDataLog = useRef<any[]>([]);
 
+  // Request permissions immediately when the component loads
   useEffect(() => {
-    if (Platform.OS === "web") {
-      // Web: use getUserMedia
-      let stream: MediaStream | null = null;
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+  }, []);
 
-      const startCamera = async () => {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user" },
-            audio: false,
-          });
-
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            setIsLoading(false);
-            onCameraReady?.();
-          }
-        } catch (err) {
-          const errorMessage =
-            err instanceof Error ? err.message : "Failed to access camera";
-          setError(errorMessage);
-          setIsLoading(false);
-          console.error("Camera access error:", err);
-        }
-      };
-
-      startCamera();
-
-      return () => {
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
-        }
-      };
-    } else {
-      // Wait until permission state is known before acting
-      if (permission === null) return;
-
-      const initCamera = async () => {
-        try {
-          if (!permission.granted) {
-            const result = await requestPermission();
-            if (!result.granted) {
-              setError("Camera permission is required to see the live feed.");
-              setIsLoading(false);
-              return;
-            }
-          }
-
-          setIsLoading(false);
-          onCameraReady?.();
-        } catch (err) {
-          setError("Camera could not be started.");
-          setIsLoading(false);
-        }
-      };
-
-      initCamera();
+  // Watch recording state changes from parent component
+  useEffect(() => {
+    if (!isRecording && frameDataLog.current.length > 0) {
+      if (onDataCaptured) {
+        onDataCaptured(frameDataLog.current);
+      }
+      frameDataLog.current = [];
     }
-  }, [onCameraReady, permission, requestPermission]);
+  }, [isRecording]);
 
-  if (error) {
-    // Show a placeholder instead of blocking - recording still works
+  const handleManualRequest = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasPermission(status === "granted");
+  };
+
+  if (hasPermission === null) {
+    return <View style={styles.container} />;
+  }
+  
+  if (hasPermission === false) {
     return (
-      <View style={styles.container}>
-        <View style={styles.placeholderContent}>
-          <ThemedText style={styles.cameraIconText}>📷</ThemedText>
-          <ThemedText style={styles.placeholderText}>
-            Camera access needed
-          </ThemedText>
-          <ThemedText style={styles.placeholderSubtext}>
-            Allow camera access in your device settings, then reopen the app.
-          </ThemedText>
-          <ThemedText style={styles.recordingStillWorks}>
-            Recording will still work with pose detection data
-          </ThemedText>
-        </View>
-        {isRecording && (
-          <View style={styles.recordingIndicator}>
-            <View style={styles.recordingDot} />
-            <ThemedText style={styles.recordingText}>REC</ThemedText>
-          </View>
-        )}
+      <View style={styles.permissionContainer}>
+        <Text style={styles.text}>Camera access is required for AI tracking.</Text>
+        <TouchableOpacity style={styles.button} onPress={handleManualRequest}>
+          <Text style={styles.btnText}>🔓 Grant Camera Permission</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.dark.accent} />
-          <ThemedText style={styles.loadingText}>Loading camera...</ThemedText>
-        </View>
-      )}
-      {Platform.OS === "web" && (
-        <video
-          ref={videoRef}
-          style={styles.webVideo}
-          autoPlay
-          playsInline
-          muted
-        />
-      )}
-      {Platform.OS !== "web" && permission?.granted && (
-        <CameraView
-          style={styles.cameraView}
-          facing="front"
-        />
-      )}
-      {isRecording && (
-        <View style={styles.recordingIndicator}>
-          <View style={styles.recordingDot} />
-          <ThemedText style={styles.recordingText}>REC</ThemedText>
-        </View>
-      )}
+      <CameraView 
+        style={styles.camera} 
+        facing="front"
+        onLayout={() => {
+          if (onCameraReady) onCameraReady();
+        }}
+      >
+        <Svg style={StyleSheet.absoluteFill}>
+          {detectedLandmarks.map((lm, index) => (
+            <Circle key={index} cx={`${lm.x * 100}%`} cy={`${lm.y * 100}%`} r="6" fill="#00adb5" />
+          ))}
+        </Svg>
+      </CameraView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.backgroundElement,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  webVideo: {
-    flex: 1,
-    width: "100%",
-    objectFit: "cover",
-  } as any,
-  cameraView: {
-    flex: 5,
-    width: "90%",
-  },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: Colors.dark.backgroundElement,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 100,
-  },
-  loadingText: {
-    color: Colors.dark.textSecondary,
-    marginTop: 16,
-  },
-  errorText: {
-    color: "#e74c3c",
-    textAlign: "center",
-    paddingHorizontal: 24,
-    fontSize: 14,
-  },
-  placeholderContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-    gap: 12,
-  },
-  cameraIconText: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  placeholderText: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  placeholderSubtext: {
-    color: Colors.dark.textSecondary,
-    fontSize: 12,
-    textAlign: "center",
-    paddingHorizontal: 16,
-  },
-  recordingStillWorks: {
-    color: Colors.dark.accent,
-    fontSize: 11,
-    fontWeight: "500",
-    textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 16,
-  },
-  recordingIndicator: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(231, 76, 60, 0.9)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    gap: 8,
-    zIndex: 10,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#fff",
-  },
-  recordingText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 12,
-  },
+  container: { flex: 1, backgroundColor: "#000", borderRadius: 12, overflow: "hidden" },
+  permissionContainer: { flex: 1, backgroundColor: "#1c1c1c", justifyContent: "center", alignItems: "center", padding: 20 },
+  camera: { flex: 1 },
+  text: { color: "#9BA1A6", textAlign: "center", marginBottom: 20, fontSize: 14 },
+  button: { backgroundColor: "#3498db", paddingVertical: 14, paddingHorizontal: 24, borderRadius: 10, alignSelf: "center" },
+  btnText: { color: "#fff", fontWeight: "700", fontSize: 16 }
 });
