@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -8,8 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Import the native CameraFeed component instead of WebView
-import { CameraFeed } from "../components/camera-feed"; 
+import { CameraFeed, PoseFrame } from "../components/camera-feed";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing } from "@/constants/theme";
@@ -32,87 +31,105 @@ const CLASS_TIPS: Record<number, string> = {
 };
 
 const STATUS_LABELS: Record<SessionStatus, string> = {
-  idle:      "Ready to record",
+  idle: "Ready to record",
   countdown: "Get ready…",
   recording: "Recording in progress…",
   analyzing: "Analysing your form…",
-  complete:  "Analysis complete",
-  error:     "Error",
+  complete: "Analysis complete",
+  error: "Error",
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TrainerScreen() {
-  const [webviewReady, setWebviewReady] = useState(false);
-  const [status, setStatus]             = useState<SessionStatus>("idle");
-  const [formLabel, setFormLabel]       = useState<string>("");
-  const [aiFeedback, setAiFeedback]     = useState<string>("");
-  const [frameCount, setFrameCount]     = useState(0);
-  const [errorMsg, setErrorMsg]         = useState<string>("");
+  const [cameraReady, setCameraReady] = useState(false);
+  const [status, setStatus] = useState<SessionStatus>("idle");
+  const [formLabel, setFormLabel] = useState<string>("");
+  const [aiFeedback, setAiFeedback] = useState<string>("");
+  const [frameCount, setFrameCount] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
-  // Handles data payload packets from the camera element now
-  const handleDataCaptured = useCallback((capturedFrames: any[]) => {
-    setFrameCount(capturedFrames.length);
+  // ─── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleCameraReady = useCallback(() => {
+    setCameraReady(true);
+    setStatus("idle");
+  }, []);
+
+  // Called by CameraFeed when recording stops and frames are ready
+  const handleDataCaptured = useCallback((frames: PoseFrame[]) => {
+    setFrameCount(frames.length);
     setStatus("analyzing");
 
-    // Simulates processing sequence states for validation tests
+    // TODO: send `frames` to your backend or AI API here
+    // Each frame: { timestamp: number, keypoints: [{ x, y, score, name }] }
+    console.log(
+      `[TrainerScreen] Received ${frames.length} frames`,
+      JSON.stringify(frames.slice(0, 2), null, 2),
+    );
+
+    // Placeholder — replace with real classification
     setTimeout(() => {
       setStatus("complete");
       setFormLabel("✓ Reps Evaluated");
-      setAiFeedback(CLASS_TIPS[0]); 
+      setAiFeedback(CLASS_TIPS[0]);
     }, 2000);
-  }, []);
-
-  const handleCameraReady = useCallback(() => {
-    setWebviewReady(true);
-    setStatus("idle");
   }, []);
 
   const handleStartRecording = useCallback(() => {
     setStatus("recording");
     setFrameCount(0);
+    setFormLabel("");
+    setAiFeedback("");
   }, []);
 
   const handleStopRecording = useCallback(() => {
     setStatus("analyzing");
   }, []);
 
+  // ─── Derived state ─────────────────────────────────────────────────────────
+
   const isActive = status === "countdown" || status === "recording";
 
-  // ─── Render ──────────────────────────────────────────────────────────────
+  const recordButtonLabel =
+    status === "countdown"
+      ? "⏳ Get ready…"
+      : status === "recording"
+        ? "■ Stop Recording"
+        : "▶ Start Recording";
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ThemedView style={styles.wrapper}>
-
-        {/* Title */}
         <ThemedText type="title" style={styles.title}>
           AI Trainer
         </ThemedText>
 
-        {/* Camera Viewport Workspace */}
-        <View style={styles.webviewContainer}>
-          <CameraFeed 
+        {/* Camera viewport */}
+        <View style={styles.cameraContainer}>
+          <CameraFeed
             isRecording={status === "recording"}
             onCameraReady={handleCameraReady}
             onDataCaptured={handleDataCaptured}
           />
 
-          {/* Only overlays loading graphics if permitted but hardware is heating up */}
-          {(!webviewReady && status !== "error") && (
-            <View style={styles.webviewOverlay}>
+          {/* Loading overlay until camera is ready */}
+          {!cameraReady && status !== "error" && (
+            <View style={styles.overlay}>
               <ActivityIndicator size="large" color={Colors.dark.accent} />
               <ThemedText style={styles.loadingText}>
-                Starting Camera Hardware…
+                Starting Camera…
               </ThemedText>
             </View>
           )}
 
-          {/* Live frame counter badge while recording */}
+          {/* Live frame counter while recording */}
           {status === "recording" && (
             <View style={styles.frameBadge}>
               <ThemedText style={styles.frameBadgeText}>
-                Active Native Stream
+                {frameCount} frames
               </ThemedText>
             </View>
           )}
@@ -123,12 +140,12 @@ export default function TrainerScreen() {
           <View
             style={[
               styles.statusDot,
-              status === "idle"      && styles.dotIdle,
+              status === "idle" && styles.dotIdle,
               status === "countdown" && styles.dotCountdown,
               status === "recording" && styles.dotRecording,
               status === "analyzing" && styles.dotAnalyzing,
-              status === "complete"  && styles.dotComplete,
-              status === "error"     && styles.dotError,
+              status === "complete" && styles.dotComplete,
+              status === "error" && styles.dotError,
             ]}
           />
           <ThemedText style={styles.statusLabel}>
@@ -136,22 +153,15 @@ export default function TrainerScreen() {
           </ThemedText>
         </View>
 
-        {/* Record / Stop toggle button layout control elements */}
-        {webviewReady && (
+        {/* Record / Stop button */}
+        {cameraReady && (
           <Pressable
-            style={[
-              styles.recordButton,
-              isActive && styles.recordButtonActive,
-            ]}
+            style={[styles.recordButton, isActive && styles.recordButtonActive]}
             onPress={isActive ? handleStopRecording : handleStartRecording}
             disabled={status === "analyzing"}
           >
             <ThemedText style={styles.recordButtonText}>
-              {status === "countdown"
-                ? "⏳ Get ready…"
-                : status === "recording"
-                ? "■ Stop Recording"
-                : "▶ Start Recording"}
+              {recordButtonLabel}
             </ThemedText>
           </Pressable>
         )}
@@ -194,8 +204,8 @@ export default function TrainerScreen() {
             <ThemedView style={styles.tipCard}>
               <ThemedText style={styles.tipTitle}>Tips</ThemedText>
               <ThemedText style={styles.tipText}>
-                Position your whole body in frame. Keep your elbows at ~45°
-                and maintain a straight line from head to heels.
+                Position your whole body in frame. Keep your elbows at ~45° and
+                maintain a straight line from head to heels.
               </ThemedText>
             </ThemedView>
           )}
@@ -204,7 +214,7 @@ export default function TrainerScreen() {
             <ThemedView style={styles.tipCard}>
               <ThemedText style={styles.tipTitle}>Recording…</ThemedText>
               <ThemedText style={styles.tipText}>
-                Tracking frame positions live. Press Stop when your push-up set is completed.
+                Capturing pose keypoints live. Press Stop when your set is done.
               </ThemedText>
             </ThemedView>
           )}
@@ -213,12 +223,11 @@ export default function TrainerScreen() {
             <View style={styles.analyzingRow}>
               <ActivityIndicator color={Colors.dark.accent} />
               <ThemedText style={styles.analyzingText}>
-                Running Matrix Processing Formats…
+                Processing {frameCount} captured frames…
               </ThemedText>
             </View>
           )}
         </ScrollView>
-
       </ThemedView>
     </SafeAreaView>
   );
@@ -244,7 +253,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
     textAlign: "center",
   },
-  webviewContainer: {
+  cameraContainer: {
     height: 280,
     borderRadius: 12,
     overflow: "hidden",
@@ -253,7 +262,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
     backgroundColor: Colors.dark.backgroundElement,
   },
-  webviewOverlay: {
+  overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.dark.backgroundElement,
     justifyContent: "center",
@@ -292,12 +301,12 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
   },
-  dotIdle:      { backgroundColor: Colors.dark.textSecondary },
+  dotIdle: { backgroundColor: Colors.dark.textSecondary },
   dotCountdown: { backgroundColor: "#f39c12" },
   dotRecording: { backgroundColor: "#e74c3c" },
   dotAnalyzing: { backgroundColor: "#f39c12" },
-  dotComplete:  { backgroundColor: "#27ae60" },
-  dotError:     { backgroundColor: "#e74c3c" },
+  dotComplete: { backgroundColor: "#27ae60" },
+  dotError: { backgroundColor: "#e74c3c" },
   statusLabel: {
     color: Colors.dark.textSecondary,
     fontSize: 12,
@@ -340,7 +349,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   resultCardGood: { backgroundColor: "#1a4731" },
-  resultCardBad:  { backgroundColor: "#4a1a1a" },
+  resultCardBad: { backgroundColor: "#4a1a1a" },
   resultLabel: {
     fontSize: 16,
     fontWeight: "700",
