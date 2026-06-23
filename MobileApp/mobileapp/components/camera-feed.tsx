@@ -9,7 +9,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 
 // ─── CONFIG ──────────────────────────────────────────────
-const API_URL = "http://10.0.0.199:5000/analyze"; // ← Your computer's IP
+const API_URL = "http://10.0.0.199:5000/analyze";
 
 // ─── Helpers ─────────────────────────────────────────────
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
