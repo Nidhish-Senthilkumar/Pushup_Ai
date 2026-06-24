@@ -9,6 +9,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 
 // ─── CONFIG ──────────────────────────────────────────────
+// replace 10.0.0.199 with ur IP Address
 const API_URL = "http://10.0.0.199:5000/analyze";
 
 // ─── Helpers ─────────────────────────────────────────────
