@@ -3,6 +3,7 @@ import mediapipe as mp
 import cv2
 import numpy as np
 import os
+import tensorflow as tf
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -20,6 +21,17 @@ pose = mp_pose.Pose(
     min_detection_confidence=0.5,
     min_tracking_confidence=0.5
 )
+
+# Load LSTM Model once at startup
+MODEL_PATH = r"F:\Projects\AI\Internship\Website\model\model.keras"  # Change if needed
+model = None
+
+try:
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print(f"✅ LSTM Model loaded successfully from: {MODEL_PATH}")
+except Exception as e:
+    print(f"❌ Failed to load LSTM model: {e}")
+    model = None
 
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi'}
 
@@ -68,7 +80,6 @@ def analyze_video():
             if results.pose_landmarks:
                 landmarks = results.pose_landmarks.landmark
 
-                # Key points
                 r_shoulder = [landmarks[12].x, landmarks[12].y]
                 r_elbow = [landmarks[14].x, landmarks[14].y]
                 r_wrist = [landmarks[16].x, landmarks[16].y]
@@ -83,13 +94,11 @@ def analyze_video():
                 l_knee = [landmarks[25].x, landmarks[25].y]
                 l_ankle = [landmarks[27].x, landmarks[27].y]
 
-                # Mid points
                 m_hip = [(r_hip[0] + l_hip[0]) / 2, (r_hip[1] + l_hip[1]) / 2]
                 m_knee = [(r_knee[0] + l_knee[0]) / 2, (r_knee[1] + l_knee[1]) / 2]
                 m_shoulder = [(l_shoulder[0] + r_shoulder[0]) / 2, (l_shoulder[1] + r_shoulder[1]) / 2]
                 m_elbow = [(l_elbow[0] + r_elbow[0]) / 2, (l_elbow[1] + r_elbow[1]) / 2]
 
-                # Angles
                 r_shoulderang = 180 - calculate_angle(r_hip, r_shoulder, r_elbow)
                 l_shoulderang = 180 - calculate_angle(l_hip, l_shoulder, l_elbow)
                 hipang = calculate_angle(m_knee, m_hip, m_shoulder)
@@ -109,7 +118,6 @@ def analyze_video():
                     "knee_angle": round(float(m_knee_ang), 4)
                 })
             else:
-                # Fill with zeros if no detection
                 all_frame_features.append({
                     "hip_angle": 0.0,
                     "shoulder_angle": 0.0,
@@ -129,7 +137,6 @@ def analyze_video():
         
         for i in range(0, len(all_frame_features), SEQUENCE_LENGTH):
             seq = all_frame_features[i:i + SEQUENCE_LENGTH]
-            # Pad last sequence with zeros if needed
             while len(seq) < SEQUENCE_LENGTH:
                 seq.append({
                     "hip_angle": 0.0,
@@ -139,13 +146,37 @@ def analyze_video():
                 })
             sequences.append(seq)
 
+        # === LSTM PREDICTION ===
+        predicted_class = 0
+        confidence = 0.0
+
+        if model is not None and sequences:
+            try:
+                # Convert to numpy array [num_seq, 30, 4]
+                X = np.array([
+                    [[f["hip_angle"], f["shoulder_angle"], f["elbow_angle"], f["knee_angle"]] 
+                     for f in seq] 
+                    for seq in sequences
+                ], dtype=np.float32)
+
+                predictions = model.predict(X, verbose=0)
+                mean_probs = np.mean(predictions, axis=0)
+                predicted_class = int(np.argmax(mean_probs))
+                confidence = float(np.max(mean_probs) * 100)
+
+                print(f"🎯 Predicted Class: {predicted_class} | Confidence: {confidence:.1f}%")
+            except Exception as e:
+                print(f"LSTM prediction error: {e}")
+
         return jsonify({
             "success": True,
             "total_frames": frame_count,
             "num_sequences": len(sequences),
             "sequence_length": SEQUENCE_LENGTH,
-            "sequences": sequences,          # ← List of 30-frame sequences
-            "message": f"Created {len(sequences)} sequences of {SEQUENCE_LENGTH} frames each"
+            "sequences": sequences,
+            "predicted_class": predicted_class,
+            "confidence": round(confidence, 1),
+            "message": f"Created {len(sequences)} sequences. Predicted class: {predicted_class}"
         })
 
     except Exception as e:
@@ -160,6 +191,6 @@ def health():
 
 
 if __name__ == '__main__':
-    print("🚀 Push-up Sequence Server Running (30 frames per sequence)")
+    print("🚀 Push-up Sequence Server Running")
     print("→ POST to http://10.0.0.199:5000/analyze")
     app.run(host='0.0.0.0', port=5000, debug=True)

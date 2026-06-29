@@ -5,15 +5,16 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { CameraFeed, PoseFrame } from "../components/camera-feed";
+import { CameraFeed } from "../components/camera-feed";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing } from "@/constants/theme";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types & Constants ─────────────────────────────────────────────────────
 
 type SessionStatus =
   | "idle"
@@ -22,6 +23,13 @@ type SessionStatus =
   | "analyzing"
   | "complete"
   | "error";
+
+const CLASS_LABELS: Record<number, string> = {
+  0: "✅ Perfect Form",
+  1: "Elbows Too Wide",
+  2: "Hips Sagging",
+  3: "Knees Not Locked",
+};
 
 const CLASS_TIPS: Record<number, string> = {
   0: "Great work! Keep your elbows close and stay aligned for even cleaner reps.",
@@ -39,7 +47,7 @@ const STATUS_LABELS: Record<SessionStatus, string> = {
   error: "Error",
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────────────────────────────────────────────
 
 export default function TrainerScreen() {
   const [cameraReady, setCameraReady] = useState(false);
@@ -49,31 +57,28 @@ export default function TrainerScreen() {
   const [frameCount, setFrameCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
-  // ─── Handlers ──────────────────────────────────────────────────────────────
-
   const handleCameraReady = useCallback(() => {
     setCameraReady(true);
     setStatus("idle");
   }, []);
 
-  // Called by CameraFeed when recording stops and frames are ready
-  const handleDataCaptured = useCallback((frames: PoseFrame[]) => {
-    setFrameCount(frames.length);
-    setStatus("analyzing");
+  const handleDataCaptured = useCallback((result: any) => {
+    console.log("📥 BACKEND RESPONSE:", JSON.stringify(result, null, 2));
 
-    // TODO: send `frames` to your backend or AI API here
-    // Each frame: { timestamp: number, keypoints: [{ x, y, score, name }] }
-    console.log(
-      `[TrainerScreen] Received ${frames.length} frames`,
-      JSON.stringify(frames.slice(0, 2), null, 2),
-    );
+    setFrameCount(result.total_frames || 0);
 
-    // Placeholder — replace with real classification
-    setTimeout(() => {
+    if (result.predicted_class !== undefined) {
+      const cls = result.predicted_class;
+      const conf = result.confidence || 0;
+
+      setFormLabel(CLASS_LABELS[cls] || `Form Class ${cls}`);
+      setAiFeedback(CLASS_TIPS[cls] || CLASS_TIPS[0]);
       setStatus("complete");
-      setFormLabel("✓ Reps Evaluated");
-      setAiFeedback(CLASS_TIPS[0]);
-    }, 2000);
+    } else {
+      setFormLabel("Analysis Complete");
+      setAiFeedback("No specific feedback available");
+      setStatus("complete");
+    }
   }, []);
 
   const handleStartRecording = useCallback(() => {
@@ -87,18 +92,14 @@ export default function TrainerScreen() {
     setStatus("analyzing");
   }, []);
 
-  // ─── Derived state ─────────────────────────────────────────────────────────
-
   const isActive = status === "countdown" || status === "recording";
 
   const recordButtonLabel =
     status === "countdown"
       ? "⏳ Get ready…"
       : status === "recording"
-        ? "■ Stop Recording"
-        : "▶ Start Recording";
-
-  // ─── Render ────────────────────────────────────────────────────────────────
+      ? "■ Stop Recording"
+      : "▶ Start Recording";
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
@@ -107,15 +108,13 @@ export default function TrainerScreen() {
           AI Trainer
         </ThemedText>
 
-        {/* Camera viewport */}
         <View style={styles.cameraContainer}>
           <CameraFeed
             isRecording={status === "recording"}
             onCameraReady={handleCameraReady}
-            onDataCaptured={handleDataCaptured}
+            onResult={handleDataCaptured}
           />
 
-          {/* Loading overlay until camera is ready */}
           {!cameraReady && status !== "error" && (
             <View style={styles.overlay}>
               <ActivityIndicator size="large" color={Colors.dark.accent} />
@@ -125,7 +124,6 @@ export default function TrainerScreen() {
             </View>
           )}
 
-          {/* Live frame counter while recording */}
           {status === "recording" && (
             <View style={styles.frameBadge}>
               <ThemedText style={styles.frameBadgeText}>
@@ -135,7 +133,6 @@ export default function TrainerScreen() {
           )}
         </View>
 
-        {/* Status row */}
         <View style={styles.statusRow}>
           <View
             style={[
@@ -153,7 +150,6 @@ export default function TrainerScreen() {
           </ThemedText>
         </View>
 
-        {/* Record / Stop button */}
         {cameraReady && (
           <Pressable
             style={[styles.recordButton, isActive && styles.recordButtonActive]}
@@ -166,7 +162,6 @@ export default function TrainerScreen() {
           </Pressable>
         )}
 
-        {/* Feedback panel */}
         <ScrollView
           style={styles.feedbackPanel}
           contentContainerStyle={styles.feedbackContent}
@@ -180,20 +175,13 @@ export default function TrainerScreen() {
             </ThemedView>
           )}
 
-          {status === "complete" && formLabel !== "" && (
-            <ThemedView
-              style={[
-                styles.resultCard,
-                formLabel.startsWith("✓")
-                  ? styles.resultCardGood
-                  : styles.resultCardBad,
-              ]}
-            >
+          {status === "complete" && formLabel && (
+            <ThemedView style={[styles.resultCard, styles.resultCardGood]}>
               <ThemedText style={styles.resultLabel}>{formLabel}</ThemedText>
             </ThemedView>
           )}
 
-          {aiFeedback !== "" && status === "complete" && (
+          {aiFeedback && status === "complete" && (
             <ThemedView style={styles.tipCard}>
               <ThemedText style={styles.tipTitle}>How to improve</ThemedText>
               <ThemedText style={styles.tipText}>{aiFeedback}</ThemedText>
@@ -210,20 +198,11 @@ export default function TrainerScreen() {
             </ThemedView>
           )}
 
-          {status === "recording" && (
-            <ThemedView style={styles.tipCard}>
-              <ThemedText style={styles.tipTitle}>Recording…</ThemedText>
-              <ThemedText style={styles.tipText}>
-                Capturing pose keypoints live. Press Stop when your set is done.
-              </ThemedText>
-            </ThemedView>
-          )}
-
           {status === "analyzing" && (
             <View style={styles.analyzingRow}>
               <ActivityIndicator color={Colors.dark.accent} />
               <ThemedText style={styles.analyzingText}>
-                Processing {frameCount} captured frames…
+                Analyzing your form...
               </ThemedText>
             </View>
           )}
@@ -232,8 +211,6 @@ export default function TrainerScreen() {
     </SafeAreaView>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
