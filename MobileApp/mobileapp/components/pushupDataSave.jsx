@@ -1,9 +1,20 @@
-import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from "react";
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
+import { useFocusEffect } from "expo-router";
 
 // IMPORT storage tools from your storage file
-import { loadHistoryFromFile, saveWorkoutToFile, clearHistoryFile } from '../storage/storage';
+import {
+  loadHistoryFromFile,
+  saveWorkoutToFile,
+  clearHistoryFile,
+  clearAllDeviceData,
+} from "../storage/storage";
 
 // IMPORT theme assets
 import { ThemedText } from "@/components/themed-text";
@@ -12,7 +23,7 @@ import { Colors, Spacing } from "@/constants/theme";
 
 export default function PushupDataSave() {
   const [history, setHistory] = useState([]);
-  const [fileRawText, setFileRawText] = useState('No data loaded yet.');
+  const [fileRawText, setFileRawText] = useState("No data loaded yet.");
 
   // Load saved history from the phone's storage.
   const loadData = useCallback(async () => {
@@ -22,12 +33,32 @@ export default function PushupDataSave() {
     setFileRawText(JSON.stringify(verifiedData, null, 2));
   }, []);
 
+  const handleClearAllDeviceData = () => {
+    Alert.alert(
+      "Clear All Device Data",
+      "This will permanently delete all workouts, cached data, and locally stored app data from this device.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Everything",
+          style: "destructive",
+          onPress: async () => {
+            await clearAllDeviceData(); // implement in storage.ts
+
+            setHistory([]);
+            setFileRawText("No data found.");
+          },
+        },
+      ],
+    );
+  };
+
   // Reload every time this screen comes into focus, so sessions saved on the
   // Trainer tab show up the moment you switch back to Stats.
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   // Simulates a standard successful workout from the AI tracking system
@@ -37,11 +68,11 @@ export default function PushupDataSave() {
       date: new Date().toLocaleDateString(),
       count: pushupCount,
       points: pointsEarned,
-      reps: null // Fallback placeholder for standard quick sessions
+      reps: null, // Fallback placeholder for standard quick sessions
     };
 
     const updatedList = await saveWorkoutToFile(newSession, history);
-    setHistory(updatedList); 
+    setHistory(updatedList);
     setFileRawText(JSON.stringify(updatedList, null, 2)); // Update raw viewer
     Alert.alert("Workout Saved!", `Recorded ${pushupCount} pushups.`);
   };
@@ -52,7 +83,7 @@ export default function PushupDataSave() {
     const parsedReps = [
       { repNumber: 1, lowestElbowAngle: 63.9, highestElbowAngle: 179.5 },
       { repNumber: 2, lowestElbowAngle: 51.7, highestElbowAngle: 179.7 },
-      { repNumber: 3, lowestElbowAngle: 51.9, highestElbowAngle: 179.9 }
+      { repNumber: 3, lowestElbowAngle: 51.9, highestElbowAngle: 179.9 },
     ];
 
     const newSession = {
@@ -62,13 +93,17 @@ export default function PushupDataSave() {
       points: parsedReps.length * 100,
       reps: parsedReps,
       // Target text property populated directly by your teammate's Gemini API output block
-      geminiFeedback: "Excellent execution throughout this set! Your depth surpassed the standard 90° requirement comfortably, averaging around 55° at your lowest points. Great extension control on the lockouts."
+      geminiFeedback:
+        "Excellent execution throughout this set! Your depth surpassed the standard 90° requirement comfortably, averaging around 55° at your lowest points. Great extension control on the lockouts.",
     };
 
     const updatedList = await saveWorkoutToFile(newSession, history);
-    setHistory(updatedList); 
+    setHistory(updatedList);
     setFileRawText(JSON.stringify(updatedList, null, 2));
-    Alert.alert("AI Set Processed", "Model frame analytics converted to history logs!");
+    Alert.alert(
+      "AI Set Processed",
+      "Model frame analytics converted to history logs!",
+    );
   };
 
   // Deletes just ONE specific workout line item when pressed and held
@@ -78,19 +113,21 @@ export default function PushupDataSave() {
       "Are you sure you want to delete this specific workout from your history?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive", 
+        {
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
-            const updatedList = history.filter(item => item && item.id !== itemId);
+            const updatedList = history.filter(
+              (item) => item && item.id !== itemId,
+            );
             setHistory(updatedList);
             setFileRawText(JSON.stringify(updatedList, null, 2)); // Update raw viewer
-            
+
             // Overwrites the file on the phone's storage with the newly shrunk list
-            await saveWorkoutToFile(null, updatedList); 
-          } 
-        }
-      ]
+            await saveWorkoutToFile(null, updatedList);
+          },
+        },
+      ],
     );
   };
 
@@ -101,75 +138,111 @@ export default function PushupDataSave() {
       "Are you sure you want to permanently clear your entire workout history?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete Everything", 
-          style: "destructive", 
+        {
+          text: "Delete Everything",
+          style: "destructive",
           onPress: async () => {
             const emptyList = await clearHistoryFile();
             setHistory(emptyList);
-            setFileRawText('The file has been cleared.');
-          } 
-        }
-      ]
+            setFileRawText("The file has been cleared.");
+          },
+        },
+      ],
     );
   };
 
   return (
     <View style={{ marginBottom: Spacing.four }}>
+      <TouchableOpacity
+        style={styles.dangerButton}
+        onPress={handleClearAllDeviceData}
+      >
+        <ThemedText style={styles.dangerButtonText}>
+          🗑️ Clear All Saved Device Data
+        </ThemedText>
+      </TouchableOpacity>
       {/* DEVELOPER SIMULATOR CARD */}
       <ThemedView style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Developer Tools</ThemedText>
-        
-        <TouchableOpacity 
-          style={styles.primaryButton} 
+
+        <TouchableOpacity
+          style={styles.primaryButton}
           onPress={() => handleWorkoutComplete(25, 250)}
         >
-          <ThemedText style={styles.buttonText}>+ Simulate Standard Workout (25 Reps)</ThemedText>
+          <ThemedText style={styles.buttonText}>
+            + Simulate Standard Workout (25 Reps)
+          </ThemedText>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.primaryButton, { marginTop: Spacing.one }]} 
+        <TouchableOpacity
+          style={[styles.primaryButton, { marginTop: Spacing.one }]}
           onPress={handleSimulateModelWorkout}
         >
-          <ThemedText style={styles.buttonText}>⚡ Process AI Model Training Metrics</ThemedText>
+          <ThemedText style={styles.buttonText}>
+            ⚡ Process AI Model Training Metrics
+          </ThemedText>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.dangerButton} onPress={handleClearWithWarning}>
-          <ThemedText style={styles.dangerButtonText}>⚠️ Reset Whole History File</ThemedText>
+
+        <TouchableOpacity
+          style={styles.dangerButton}
+          onPress={handleClearWithWarning}
+        >
+          <ThemedText style={styles.dangerButtonText}>
+            ⚠️ Reset Whole History File
+          </ThemedText>
         </TouchableOpacity>
       </ThemedView>
 
       {/* HISTORICAL RECORDS DISPLAY */}
       <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Saved Workout History</ThemedText>
-        
+        <ThemedText style={styles.sectionTitle}>
+          Saved Workout History
+        </ThemedText>
+
         {history.length === 0 ? (
-          <ThemedText style={styles.emptyText}>No saved workouts found on this device.</ThemedText>
+          <ThemedText style={styles.emptyText}>
+            No saved workouts found on this device.
+          </ThemedText>
         ) : (
           history.map((session, index) => {
             // 🛡️ CRITICAL CRASH GUARD: If an item is blank/null, skip it safely
             if (!session) return null;
 
             return (
-              <ThemedView key={session.id || index} style={styles.workoutCardWrapper}>
-                <TouchableOpacity 
-                  onLongPress={() => handleDeleteItem(session.id)} 
-                  delayLongPress={600} 
+              <ThemedView
+                key={session.id || index}
+                style={styles.workoutCardWrapper}
+              >
+                <TouchableOpacity
+                  onLongPress={() => handleDeleteItem(session.id)}
+                  delayLongPress={600}
                   style={[
                     styles.historyItem,
-                    session.reps && styles.itemBorder
+                    session.reps && styles.itemBorder,
                   ]}
                 >
                   <View style={styles.historyLeft}>
                     <ThemedText style={styles.historyDate}>
-                      {session.sessionNumber ? `Session #${session.sessionNumber} • ` : ""}{session.date || "Unknown Date"}
+                      {session.sessionNumber
+                        ? `Session #${session.sessionNumber} • `
+                        : ""}
+                      {session.date || "Unknown Date"}
                     </ThemedText>
                     <ThemedText style={styles.historyDetails}>
-                      {session.count ?? 0} reps{session.score != null ? ` • ${session.score}% form` : ""} • <ThemedText style={styles.holdText}>Hold to delete</ThemedText>
+                      {session.count ?? 0} reps
+                      {session.score != null
+                        ? ` • ${session.score}% form`
+                        : ""}{" "}
+                      •{" "}
+                      <ThemedText style={styles.holdText}>
+                        Hold to delete
+                      </ThemedText>
                     </ThemedText>
                   </View>
                   <View style={styles.scoreBadge}>
-                    <ThemedText style={styles.scoreText}>+{session.points ?? 0} PTS</ThemedText>
+                    <ThemedText style={styles.scoreText}>
+                      +{session.points ?? 0} PTS
+                    </ThemedText>
                   </View>
                 </TouchableOpacity>
 
@@ -184,19 +257,32 @@ export default function PushupDataSave() {
                         <View key={rIdx} style={styles.repRowWrapper}>
                           <View style={styles.repRow}>
                             <ThemedText style={styles.repNumberText}>
-                              Rep {rep.repNumber}{rep.score != null ? ` — ${rep.score}%` : ""}
+                              Rep {rep.repNumber}
+                              {rep.score != null ? ` — ${rep.score}%` : ""}
                             </ThemedText>
                             <View style={styles.angleStats}>
-                              <ThemedText style={[styles.angleLabel, incompleteDepth && styles.badAngle]}>
+                              <ThemedText
+                                style={[
+                                  styles.angleLabel,
+                                  incompleteDepth && styles.badAngle,
+                                ]}
+                              >
                                 ⬇️ Drop: {Math.round(rep.lowestElbowAngle)}°
                               </ThemedText>
-                              <ThemedText style={[styles.angleLabel, incompleteExtension && styles.badAngle]}>
+                              <ThemedText
+                                style={[
+                                  styles.angleLabel,
+                                  incompleteExtension && styles.badAngle,
+                                ]}
+                              >
                                 ⬆️ Peak: {Math.round(rep.highestElbowAngle)}°
                               </ThemedText>
                             </View>
                           </View>
                           {rep.feedback && (
-                            <ThemedText style={styles.repFeedbackText}>{rep.feedback}</ThemedText>
+                            <ThemedText style={styles.repFeedbackText}>
+                              {rep.feedback}
+                            </ThemedText>
                           )}
                         </View>
                       );
@@ -204,9 +290,12 @@ export default function PushupDataSave() {
 
                     {/* GEMINI TARGETED COACHING WRAPPER */}
                     <View style={styles.geminiBox}>
-                      <ThemedText style={styles.geminiTitle}>✨ AI Insights (Gemini Advice)</ThemedText>
+                      <ThemedText style={styles.geminiTitle}>
+                        ✨ AI Insights (Gemini Advice)
+                      </ThemedText>
                       <ThemedText style={styles.geminiText}>
-                        {session.geminiFeedback || '"Formatting data arrays for telemetry feedback evaluation..."'}
+                        {session.geminiFeedback ||
+                          '"Formatting data arrays for telemetry feedback evaluation..."'}
                       </ThemedText>
                     </View>
                   </View>
@@ -247,28 +336,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing.one,
   },
   buttonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.dark.accent,
   },
   dangerButton: {
     paddingTop: Spacing.two,
-    alignItems: 'center',
+    alignItems: "center",
   },
   dangerButtonText: {
-    color: '#e74c3c',
+    color: "#e74c3c",
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   emptyText: {
     color: Colors.dark.textSecondary,
     fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
     paddingVertical: Spacing.two,
   },
   workoutCardWrapper: {
@@ -277,13 +366,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingBottom: Spacing.two,
     marginBottom: Spacing.two,
-    borderColor: '#222',
+    borderColor: "#222",
     borderWidth: 1,
   },
   historyItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: Spacing.two,
   },
   itemBorder: {
@@ -296,7 +385,7 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.dark.text,
     marginBottom: 2,
   },
@@ -305,12 +394,12 @@ const styles = StyleSheet.create({
     color: Colors.dark.textSecondary,
   },
   holdText: {
-    color: '#e74c3c',
+    color: "#e74c3c",
     fontSize: 11,
   },
   scoreBadge: {
-    backgroundColor: '#27ae6022',
-    borderColor: '#27ae60',
+    backgroundColor: "#27ae6022",
+    borderColor: "#27ae60",
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: Spacing.two,
@@ -318,8 +407,8 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#27ae60',
+    fontWeight: "700",
+    color: "#27ae60",
   },
   repContainer: {
     paddingVertical: 4,
@@ -328,25 +417,25 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   repRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 4,
   },
   repFeedbackText: {
     fontSize: 11,
     color: Colors.dark.textSecondary,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginLeft: 2,
     marginBottom: 2,
   },
   repNumberText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.dark.text,
   },
   angleStats: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   angleLabel: {
     fontSize: 12,
@@ -354,12 +443,12 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.three,
   },
   badAngle: {
-    color: '#e74c3c',
-    fontWeight: '600',
+    color: "#e74c3c",
+    fontWeight: "600",
   },
   geminiBox: {
     backgroundColor: Colors.dark.backgroundElement,
-    borderColor: '#333',
+    borderColor: "#333",
     borderWidth: 1,
     borderRadius: 6,
     padding: 10,
@@ -367,14 +456,14 @@ const styles = StyleSheet.create({
   },
   geminiTitle: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#00adb5',
+    fontWeight: "700",
+    color: "#00adb5",
     marginBottom: 4,
   },
   geminiText: {
     fontSize: 12,
-    fontStyle: 'italic',
-    color: '#ececec',
+    fontStyle: "italic",
+    color: "#ececec",
     lineHeight: 16,
   },
   displayBox: {
@@ -384,7 +473,7 @@ const styles = StyleSheet.create({
     maxHeight: 180,
   },
   outputText: {
-    fontFamily: 'Courier',
+    fontFamily: "Courier",
     fontSize: 12,
     color: Colors.dark.text,
   },
