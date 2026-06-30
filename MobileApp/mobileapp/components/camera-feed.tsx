@@ -9,8 +9,9 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 
 // ─── CONFIG ──────────────────────────────────────────────
-// replace 10.0.0.199 with ur IP Address
-const API_URL = "http://10.0.0.199:5000/analyze";
+// This must be your computer's current LAN IP (run `ipconfig` / check Wi-Fi).
+// The phone and this computer must be on the SAME Wi-Fi network.
+const API_URL = "http://192.168.0.161:5000/analyze";
 
 // ─── Helpers ─────────────────────────────────────────────
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

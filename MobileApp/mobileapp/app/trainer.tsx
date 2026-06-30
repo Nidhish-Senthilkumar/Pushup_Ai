@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CameraFeed } from "../components/camera-feed";
+import { buildSessionFromAnalysis, saveSession } from "../storage/storage";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing } from "@/constants/theme";
@@ -56,6 +57,7 @@ export default function TrainerScreen() {
   const [aiFeedback, setAiFeedback] = useState<string>("");
   const [frameCount, setFrameCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [savedNote, setSavedNote] = useState<string>("");
 
   const handleCameraReady = useCallback(() => {
     setCameraReady(true);
@@ -79,6 +81,23 @@ export default function TrainerScreen() {
       setAiFeedback("No specific feedback available");
       setStatus("complete");
     }
+
+    // Persist this session (each pushup + feedback) sequentially to storage.
+    // Stats tab reads it back via PushupDataSave.
+    setSavedNote("Saving…");
+    (async () => {
+      try {
+        const session = buildSessionFromAnalysis(result);
+        const saved = await saveSession(session);
+        const num = saved[0]?.sessionNumber;
+        const reps = saved[0]?.count ?? 0;
+        console.log("💾 Session saved:", num, saved[0]);
+        setSavedNote(`💾 Saved as Session #${num} • ${reps} pushups`);
+      } catch (e) {
+        console.warn("[Trainer] Failed to save session:", e);
+        setSavedNote("⚠️ Could not save this session");
+      }
+    })();
   }, []);
 
   const handleStartRecording = useCallback(() => {
@@ -86,6 +105,7 @@ export default function TrainerScreen() {
     setFrameCount(0);
     setFormLabel("");
     setAiFeedback("");
+    setSavedNote("");
   }, []);
 
   const handleStopRecording = useCallback(() => {
@@ -179,6 +199,10 @@ export default function TrainerScreen() {
             <ThemedView style={[styles.resultCard, styles.resultCardGood]}>
               <ThemedText style={styles.resultLabel}>{formLabel}</ThemedText>
             </ThemedView>
+          )}
+
+          {status === "complete" && savedNote !== "" && (
+            <ThemedText style={styles.savedNote}>{savedNote}</ThemedText>
           )}
 
           {aiFeedback && status === "complete" && (
@@ -336,6 +360,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "rgba(255,255,255,0.7)",
     marginTop: 4,
+  },
+  savedNote: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: Colors.dark.accent,
+    marginBottom: Spacing.two,
   },
   tipCard: {
     backgroundColor: Colors.dark.background,

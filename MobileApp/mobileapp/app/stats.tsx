@@ -1,29 +1,79 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { StyleSheet, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing } from "@/constants/theme";
 import PushupDataSave from '@/components/pushupDataSave'; // Adjust the path if needed
+import { loadHistoryFromFile } from "@/storage/storage";
+
+// ─── Derive real stats from saved history ──────────────────────────────────
+const DAY = 24 * 60 * 60 * 1000;
+
+type SavedSession = {
+  sessionNumber?: number;
+  date?: string;
+  count?: number;
+  confidence?: number;
+  [key: string]: any;
+};
+
+function computeStats(history: SavedSession[]) {
+  if (!history.length) {
+    return { totalPushups: 0, averageScore: 0, bestScore: 0, streak: 0, thisWeek: 0, thisMonth: 0 };
+  }
+  const now = Date.now();
+  let totalPushups = 0, thisWeek = 0, thisMonth = 0;
+  let confSum = 0, confCount = 0, bestScore = 0;
+  const days = new Set();
+
+  for (const s of history) {
+    const count = Number(s.count) || 0;
+    totalPushups += count;
+
+    const conf = Number(s.confidence) || 0;
+    if (conf > 0) { confSum += conf; confCount += 1; bestScore = Math.max(bestScore, conf); }
+
+    const t = s.date ? Date.parse(s.date) : NaN;
+    if (!Number.isNaN(t)) {
+      days.add(new Date(t).toDateString());
+      if (now - t <= 7 * DAY) thisWeek += count;
+      if (now - t <= 30 * DAY) thisMonth += count;
+    }
+  }
+
+  return {
+    totalPushups,
+    averageScore: confCount ? Math.round(confSum / confCount) : 0,
+    bestScore: Math.round(bestScore),
+    streak: days.size,
+    thisWeek,
+    thisMonth,
+  };
+}
+
+function computeRecent(history: SavedSession[]) {
+  return history.slice(0, 5).map((s) => ({
+    date: s.sessionNumber ? `Session #${s.sessionNumber} • ${s.date || ""}` : (s.date || "Unknown"),
+    reps: Number(s.count) || 0,
+    avgScore: Math.round(Number(s.confidence) || 0),
+  }));
+}
 
 export default function StatsScreen() {
-  const [stats] = useState({
-    totalPushups: 24,
-    averageScore: 88,
-    bestScore: 95,
-    streak: 3,
-    thisWeek: 12,
-    thisMonth: 42,
-  });
+  const [history, setHistory] = useState<SavedSession[]>([]);
 
-  const [recentSessions] = useState([
-    { date: "Today", reps: 8, avgScore: 92 },
-    { date: "Yesterday", reps: 6, avgScore: 85 },
-    { date: "2 days ago", reps: 10, avgScore: 90 },
-    { date: "3 days ago", reps: 8, avgScore: 88 },
-    { date: "4 days ago", reps: 12, avgScore: 95 },
-  ]);
+  // Reload saved sessions whenever the Stats tab gains focus.
+  useFocusEffect(
+    useCallback(() => {
+      (async () => setHistory(await loadHistoryFromFile()))();
+    }, [])
+  );
+
+  const stats = useMemo(() => computeStats(history), [history]);
+  const recentSessions = useMemo(() => computeRecent(history), [history]);
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
@@ -81,6 +131,11 @@ export default function StatsScreen() {
         {/* Recent Sessions */}
         <ThemedView style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Recent Sessions</ThemedText>
+          {recentSessions.length === 0 && (
+            <ThemedText style={styles.tipText}>
+              No sessions yet — record a set in the AI Trainer tab and it will appear here.
+            </ThemedText>
+          )}
           {recentSessions.map((session, index) => (
             <View
               key={index}

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 
 // IMPORT storage tools from your storage file
 import { loadHistoryFromFile, saveWorkoutToFile, clearHistoryFile } from '../storage/storage';
@@ -13,16 +14,21 @@ export default function PushupDataSave() {
   const [history, setHistory] = useState([]);
   const [fileRawText, setFileRawText] = useState('No data loaded yet.');
 
-  // Automatically load the data from the phone's storage when the app opens
-  useEffect(() => {
-    async function initLoad() {
-      const savedData = await loadHistoryFromFile();
-      const verifiedData = savedData || [];
-      setHistory(verifiedData);
-      setFileRawText(JSON.stringify(verifiedData, null, 2));
-    }
-    initLoad();
+  // Load saved history from the phone's storage.
+  const loadData = useCallback(async () => {
+    const savedData = await loadHistoryFromFile();
+    const verifiedData = savedData || [];
+    setHistory(verifiedData);
+    setFileRawText(JSON.stringify(verifiedData, null, 2));
   }, []);
+
+  // Reload every time this screen comes into focus, so sessions saved on the
+  // Trainer tab show up the moment you switch back to Stats.
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   // Simulates a standard successful workout from the AI tracking system
   const handleWorkoutComplete = async (pushupCount, pointsEarned) => {
@@ -155,7 +161,9 @@ export default function PushupDataSave() {
                   ]}
                 >
                   <View style={styles.historyLeft}>
-                    <ThemedText style={styles.historyDate}>{session.date || "Unknown Date"}</ThemedText>
+                    <ThemedText style={styles.historyDate}>
+                      {session.sessionNumber ? `Session #${session.sessionNumber} • ` : ""}{session.date || "Unknown Date"}
+                    </ThemedText>
                     <ThemedText style={styles.historyDetails}>
                       {session.count ?? 0} reps • <ThemedText style={styles.holdText}>Hold to delete</ThemedText>
                     </ThemedText>
@@ -173,16 +181,21 @@ export default function PushupDataSave() {
                       const incompleteExtension = rep.highestElbowAngle < 165;
 
                       return (
-                        <View key={rIdx} style={styles.repRow}>
-                          <ThemedText style={styles.repNumberText}>Rep {rep.repNumber}</ThemedText>
-                          <View style={styles.angleStats}>
-                            <ThemedText style={[styles.angleLabel, incompleteDepth && styles.badAngle]}>
-                              ⬇️ Drop: {Math.round(rep.lowestElbowAngle)}°
-                            </ThemedText>
-                            <ThemedText style={[styles.angleLabel, incompleteExtension && styles.badAngle]}>
-                              ⬆️ Peak: {Math.round(rep.highestElbowAngle)}°
-                            </ThemedText>
+                        <View key={rIdx} style={styles.repRowWrapper}>
+                          <View style={styles.repRow}>
+                            <ThemedText style={styles.repNumberText}>Rep {rep.repNumber}</ThemedText>
+                            <View style={styles.angleStats}>
+                              <ThemedText style={[styles.angleLabel, incompleteDepth && styles.badAngle]}>
+                                ⬇️ Drop: {Math.round(rep.lowestElbowAngle)}°
+                              </ThemedText>
+                              <ThemedText style={[styles.angleLabel, incompleteExtension && styles.badAngle]}>
+                                ⬆️ Peak: {Math.round(rep.highestElbowAngle)}°
+                              </ThemedText>
+                            </View>
                           </View>
+                          {rep.feedback && (
+                            <ThemedText style={styles.repFeedbackText}>{rep.feedback}</ThemedText>
+                          )}
                         </View>
                       );
                     })}
@@ -309,11 +322,21 @@ const styles = StyleSheet.create({
   repContainer: {
     paddingVertical: 4,
   },
+  repRowWrapper: {
+    paddingVertical: 2,
+  },
   repRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 4,
+  },
+  repFeedbackText: {
+    fontSize: 11,
+    color: Colors.dark.textSecondary,
+    fontStyle: 'italic',
+    marginLeft: 2,
+    marginBottom: 2,
   },
   repNumberText: {
     fontSize: 12,
