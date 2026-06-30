@@ -16,7 +16,7 @@ type SavedSession = {
   sessionNumber?: number;
   date?: string;
   count?: number;
-  confidence?: number;
+  score?: number;
   [key: string]: any;
 };
 
@@ -26,15 +26,18 @@ function computeStats(history: SavedSession[]) {
   }
   const now = Date.now();
   let totalPushups = 0, thisWeek = 0, thisMonth = 0;
-  let confSum = 0, confCount = 0, bestScore = 0;
+  let scoreSum = 0, scoreCount = 0, bestScore = 0;
   const days = new Set();
 
   for (const s of history) {
     const count = Number(s.count) || 0;
     totalPushups += count;
 
-    const conf = Number(s.confidence) || 0;
-    if (conf > 0) { confSum += conf; confCount += 1; bestScore = Math.max(bestScore, conf); }
+    // Only count sessions that actually had reps toward the score average.
+    if (count > 0) {
+      const score = Number(s.score) || 0;
+      scoreSum += score; scoreCount += 1; bestScore = Math.max(bestScore, score);
+    }
 
     const t = s.date ? Date.parse(s.date) : NaN;
     if (!Number.isNaN(t)) {
@@ -46,7 +49,7 @@ function computeStats(history: SavedSession[]) {
 
   return {
     totalPushups,
-    averageScore: confCount ? Math.round(confSum / confCount) : 0,
+    averageScore: scoreCount ? Math.round(scoreSum / scoreCount) : 0,
     bestScore: Math.round(bestScore),
     streak: days.size,
     thisWeek,
@@ -58,7 +61,7 @@ function computeRecent(history: SavedSession[]) {
   return history.slice(0, 5).map((s) => ({
     date: s.sessionNumber ? `Session #${s.sessionNumber} • ${s.date || ""}` : (s.date || "Unknown"),
     reps: Number(s.count) || 0,
-    avgScore: Math.round(Number(s.confidence) || 0),
+    avgScore: Math.round(Number(s.score) || 0),
   }));
 }
 

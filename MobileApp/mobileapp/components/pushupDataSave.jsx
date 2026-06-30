@@ -165,7 +165,7 @@ export default function PushupDataSave() {
                       {session.sessionNumber ? `Session #${session.sessionNumber} • ` : ""}{session.date || "Unknown Date"}
                     </ThemedText>
                     <ThemedText style={styles.historyDetails}>
-                      {session.count ?? 0} reps • <ThemedText style={styles.holdText}>Hold to delete</ThemedText>
+                      {session.count ?? 0} reps{session.score != null ? ` • ${session.score}% form` : ""} • <ThemedText style={styles.holdText}>Hold to delete</ThemedText>
                     </ThemedText>
                   </View>
                   <View style={styles.scoreBadge}>
@@ -183,7 +183,9 @@ export default function PushupDataSave() {
                       return (
                         <View key={rIdx} style={styles.repRowWrapper}>
                           <View style={styles.repRow}>
-                            <ThemedText style={styles.repNumberText}>Rep {rep.repNumber}</ThemedText>
+                            <ThemedText style={styles.repNumberText}>
+                              Rep {rep.repNumber}{rep.score != null ? ` — ${rep.score}%` : ""}
+                            </ThemedText>
                             <View style={styles.angleStats}>
                               <ThemedText style={[styles.angleLabel, incompleteDepth && styles.badAngle]}>
                                 ⬇️ Drop: {Math.round(rep.lowestElbowAngle)}°

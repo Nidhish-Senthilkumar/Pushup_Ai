@@ -25,20 +25,6 @@ type SessionStatus =
   | "complete"
   | "error";
 
-const CLASS_LABELS: Record<number, string> = {
-  0: "✅ Perfect Form",
-  1: "Elbows Too Wide",
-  2: "Hips Sagging",
-  3: "Knees Not Locked",
-};
-
-const CLASS_TIPS: Record<number, string> = {
-  0: "Great work! Keep your elbows close and stay aligned for even cleaner reps.",
-  1: "Try tucking your elbows closer to your torso — about 45° from your body.",
-  2: "Keep your hips level with your shoulders. Squeeze your glutes to hold the plank line.",
-  3: "Straighten your knees and lock your legs — your body should be a rigid plank.",
-};
-
 const STATUS_LABELS: Record<SessionStatus, string> = {
   idle: "Ready to record",
   countdown: "Get ready…",
@@ -67,32 +53,25 @@ export default function TrainerScreen() {
   const handleDataCaptured = useCallback((result: any) => {
     console.log("📥 BACKEND RESPONSE:", JSON.stringify(result, null, 2));
 
+    // Build the scored session from the raw angles (rule-based, no ML model).
+    const session = buildSessionFromAnalysis(result);
+
     setFrameCount(result.total_frames || 0);
-
-    if (result.predicted_class !== undefined) {
-      const cls = result.predicted_class;
-      const conf = result.confidence || 0;
-
-      setFormLabel(CLASS_LABELS[cls] || `Form Class ${cls}`);
-      setAiFeedback(CLASS_TIPS[cls] || CLASS_TIPS[0]);
-      setStatus("complete");
-    } else {
-      setFormLabel("Analysis Complete");
-      setAiFeedback("No specific feedback available");
-      setStatus("complete");
-    }
+    setFormLabel(`${session.label} • ${session.score}%`);
+    setAiFeedback(session.geminiFeedback);
+    setStatus("complete");
 
     // Persist this session (each pushup + feedback) sequentially to storage.
     // Stats tab reads it back via PushupDataSave.
     setSavedNote("Saving…");
     (async () => {
       try {
-        const session = buildSessionFromAnalysis(result);
         const saved = await saveSession(session);
         const num = saved[0]?.sessionNumber;
-        const reps = saved[0]?.count ?? 0;
         console.log("💾 Session saved:", num, saved[0]);
-        setSavedNote(`💾 Saved as Session #${num} • ${reps} pushups`);
+        setSavedNote(
+          `💾 Saved as Session #${num} • ${session.count} pushups • Score ${session.score}%`
+        );
       } catch (e) {
         console.warn("[Trainer] Failed to save session:", e);
         setSavedNote("⚠️ Could not save this session");
