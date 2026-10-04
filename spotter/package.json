@@ -1,0 +1,44 @@
+{
+  "name": "spotter",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Spotter: a free, real-time AI fitness coach that runs entirely in the browser.",
+  "scripts": {
+    "predev": "node scripts/sync-mediapipe-assets.mjs",
+    "dev": "vite",
+    "dev:phone": "node scripts/sync-mediapipe-assets.mjs && vite --host --mode phone",
+    "prebuild": "node scripts/sync-mediapipe-assets.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4180",
+    "booth": "npm run build && vite preview --port 4180 --open '#/arcade'",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@mediapipe/tasks-vision": "1.0.1",
+    "qrcode": "1.5.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "^22",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-basic-ssl": "2.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
+  }
+}
