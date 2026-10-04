@@ -1,0 +1,188 @@
+{
+  "_convention": "A rep counts when the person goes from the start position to depth and back to the start position. Partial reps cut off by the start or end of a clip don't count. Counted by eye from frame strips (3 to 6 frames a second), never from the model's output.",
+  "clips": [
+    {
+      "clip": "pushup-side",
+      "exercise": "pushup",
+      "view": "Side",
+      "truth": 6,
+      "note": "Slow push-ups with long holds at the top, silhouetted against the sky"
+    },
+    {
+      "clip": "pushup-angled",
+      "exercise": "pushup",
+      "view": "Angled",
+      "truth": 3,
+      "note": "Knee push-ups filmed from about 45 degrees; starts with wall push-ups in close-up, ends halfway down a full push-up"
+    },
+    {
+      "clip": "pushup-army-a",
+      "exercise": "pushup",
+      "view": "Side",
+      "truth": 0,
+      "note": "Lying chest-down the whole clip, with two bystanders in view"
+    },
+    {
+      "clip": "pushup-army-b",
+      "exercise": "pushup",
+      "view": "Side",
+      "truth": 0,
+      "note": "Holding a high plank, with two bystanders in view"
+    },
+    {
+      "clip": "squat-front-a",
+      "exercise": "squat",
+      "view": "Front",
+      "truth": 2,
+      "note": "Slow half squats with arms forward; a third squat is cut off at the bottom"
+    },
+    {
+      "clip": "squat-front-b",
+      "exercise": "squat",
+      "view": "Front",
+      "truth": 1,
+      "note": "Starts at the bottom of a squat (not counted), stands, squats again and stands back up in the last half second (re-checked at full resolution: the first count of 0 missed that last rise)"
+    },
+    {
+      "clip": "squat-rear",
+      "exercise": "squat",
+      "view": "Rear 3/4",
+      "truth": 2,
+      "note": "Barbell back squats filmed from behind and to the side"
+    },
+    {
+      "clip": "jj-cgi",
+      "exercise": "jumping-jack",
+      "view": "Front",
+      "truth": 3,
+      "note": "Computer-animated figure; 3 jumping jacks, then arm waving that must not count"
+    },
+    {
+      "clip": "lunge-side-a",
+      "exercise": "lunge",
+      "view": "Side",
+      "truth": 1,
+      "note": "Close side view with kettlebells; head leaves the frame at times"
+    },
+    {
+      "clip": "lunge-side-b",
+      "exercise": "lunge",
+      "view": "Side",
+      "truth": 1,
+      "note": "One full lunge, then the next one is cut off at the bottom"
+    },
+    {
+      "clip": "curl-two-people",
+      "exercise": "curl",
+      "view": "Front",
+      "truth": 2,
+      "note": "Two-arm curls with a man standing next to her who isn't exercising (and is bigger in the picture)"
+    },
+    {
+      "clip": "press-seated",
+      "exercise": "press",
+      "view": "Front",
+      "truth": 2,
+      "note": "Seated dumbbell press; starts with arms already overhead"
+    },
+    {
+      "clip": "situp-side",
+      "exercise": "situp",
+      "view": "Side",
+      "truth": 2,
+      "note": "Handheld camera; switches to close-ups after about 5 seconds"
+    },
+    {
+      "clip": "press-demo-rear",
+      "exercise": "press",
+      "view": "Rear",
+      "truth": 1,
+      "heldOut": true,
+      "note": "Held out: hand count recorded before the engine ever saw the clip, and no engine change after. Barbell press filmed from behind; starts with the bar overhead and ends at the top of the next press",
+      "knownMiss": "Spotter counts 0: from behind, the head and bar hide both hands at the bottom of the press, so the start position is never seen"
+    },
+    {
+      "clip": "pushpress-front",
+      "exercise": "press",
+      "view": "Front",
+      "truth": 1,
+      "heldOut": true,
+      "note": "Held out, as above. One kettlebell press from the rack, overhead, and back to the rack"
+    },
+    {
+      "clip": "burpee-side",
+      "exercise": "burpee",
+      "view": "Side",
+      "truth": 6,
+      "heldOut": true,
+      "note": "Squat-thrust burpees (no push-up, no jump). Counted by hand before the burpee detector was written, run once, no changes afterwards"
+    }
+  ],
+  "_heldOut": "Clips marked heldOut were counted by hand and recorded here before being run through the engine, and the engine was not changed afterwards. All other clips were used while developing the engine.",
+  "stress": [
+    {
+      "clip": "squat-front-a-dark",
+      "exercise": "squat",
+      "view": "Front",
+      "truth": 2,
+      "note": "squat-front-a, darkened to about a third of the light, with added sensor noise"
+    },
+    {
+      "clip": "squat-front-a-12fps",
+      "exercise": "squat",
+      "view": "Front",
+      "truth": 2,
+      "note": "squat-front-a, thinned to 12 frames a second"
+    },
+    {
+      "clip": "squat-front-a-far",
+      "exercise": "squat",
+      "view": "Front",
+      "truth": 2,
+      "note": "squat-front-a, shrunk to 40% so the person is small in the frame"
+    },
+    {
+      "clip": "pushup-side-dark",
+      "exercise": "pushup",
+      "view": "Side",
+      "truth": 6,
+      "note": "pushup-side, darkened to about a third of the light, with added sensor noise"
+    },
+    {
+      "clip": "pushup-side-12fps",
+      "exercise": "pushup",
+      "view": "Side",
+      "truth": 6,
+      "note": "pushup-side, thinned to 12 frames a second"
+    },
+    {
+      "clip": "pushup-side-far",
+      "exercise": "pushup",
+      "view": "Side",
+      "truth": 6,
+      "note": "pushup-side, shrunk to 40% so the person is small in the frame",
+      "knownMiss": "The pose model finds nobody: a silhouette shrunk to 40% is too small and too dark to detect, so setup keeps asking the person to step into view"
+    },
+    {
+      "clip": "press-seated-dark",
+      "exercise": "press",
+      "view": "Front",
+      "truth": 2,
+      "note": "press-seated, darkened to about a third of the light, with added sensor noise"
+    },
+    {
+      "clip": "press-seated-12fps",
+      "exercise": "press",
+      "view": "Front",
+      "truth": 2,
+      "note": "press-seated, thinned to 12 frames a second"
+    },
+    {
+      "clip": "press-seated-far",
+      "exercise": "press",
+      "view": "Front",
+      "truth": 2,
+      "note": "press-seated, shrunk to 40% so the person is small in the frame"
+    }
+  ]
+}

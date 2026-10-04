@@ -1,3 +1,5 @@
+> **New: [Spotter](spotter/README.md)**, the next version of PushBot. A real-time AI fitness coach for 13 exercises that runs entirely in the browser: live form coaching, guided workouts, a fitness test with a 4-week plan, progress tracking and an Arcade booth mode for conventions. No server, no API keys, works offline. **Try it: https://nidhish-senthilkumar.github.io/Pushup_Ai/** (allow the camera). To run it locally, start with `cd spotter && npm install && npm run dev`, and see [spotter/FINDINGS.md](spotter/FINDINGS.md) for a review of the original code below.
+
 # PushBot
 
 This is a tool designed to help users exercise more efficiently.
