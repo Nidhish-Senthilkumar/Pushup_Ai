@@ -151,7 +151,7 @@ export function Lab() {
                 </li>
               ))}
             </ul>
-            <button className="btn btn-volt mt-4" onClick={() => download("spotter_lab_all.csv", [...byLabel.values()].map((v) => toCsv(v.rows, v.label)).join("\n"))}>
+            <button className="btn btn-volt mt-4" onClick={() => download("cadence_lab_all.csv", [...byLabel.values()].map((v) => toCsv(v.rows, v.label)).join("\n"))}>
               <Icon.download size={18} /> Download everything (one CSV)
             </button>
             <p className="mt-3 text-xs text-muted">To retrain: put the CSVs in data/TRAINING_SET/ and run <code>python ML/LSTM.py</code> from the repository root.</p>

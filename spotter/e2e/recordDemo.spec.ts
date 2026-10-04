@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { camera, fake } from "./helpers";
 
 /**
- * Records a demo video of Spotter (sample history, a live squat set with real
+ * Records a demo video of Cadence (sample history, a live squat set with real
  * footage as the camera, the summary, an Arcade round, progress, the slides).
  * Not part of the normal suite:
  *

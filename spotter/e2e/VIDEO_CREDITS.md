@@ -1,6 +1,6 @@
 # Test footage credits
 
-The validation and end-to-end tests run real exercise footage through Spotter. The videos are not committed: `scripts/fetch-test-videos.sh` downloads them from Wikimedia Commons and cuts short clips locally. They are used only for automated testing. Changes made: trimmed, scaled, re-encoded; the fake-camera files are re-encoded as raw video.
+The validation and end-to-end tests run real exercise footage through Cadence. The videos are not committed: `scripts/fetch-test-videos.sh` downloads them from Wikimedia Commons and cuts short clips locally. They are used only for automated testing. Changes made: trimmed, scaled, re-encoded; the fake-camera files are re-encoded as raw video.
 
 | Clips | Source (Wikimedia Commons) | Author | Licence |
 |---|---|---|---|

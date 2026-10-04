@@ -11,7 +11,7 @@ import { LiveSet } from "../ui/LiveSet";
 import { PageTitle } from "../ui/Layout";
 
 const TESTS = [
-  { exerciseId: "pushup", title: "Max push-ups", how: "As many good push-ups as you can. Knee push-ups are fine; Spotter notices. The test ends a few seconds after your last rep." },
+  { exerciseId: "pushup", title: "Max push-ups", how: "As many good push-ups as you can. Knee push-ups are fine; Cadence notices. The test ends a few seconds after your last rep." },
   { exerciseId: "squat", title: "60-second squats", how: "As many full-depth squats as you can in one minute." },
   { exerciseId: "plank", title: "Max plank", how: "Hold a plank as long as you can in good form. The test ends when you drop out of position." },
 ] as const;
@@ -101,7 +101,7 @@ export function Assess() {
   return (
     <div className="space-y-6">
       <PageTitle eyebrow="Fitness test" title="Find your starting point">
-        Three short tests, coached and counted by Spotter. Then you get a rating for each one and a 4-week plan built from your results.
+        Three short tests, coached and counted by Cadence. Then you get a rating for each one and a 4-week plan built from your results.
       </PageTitle>
       <div className="grid gap-4 md:grid-cols-3">
         {TESTS.map((t, i) => (

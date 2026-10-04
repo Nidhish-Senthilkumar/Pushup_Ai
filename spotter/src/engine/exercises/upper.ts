@@ -17,14 +17,14 @@ export const pushup: RepExercise = {
   kind: "reps",
   category: "upper",
   muscles: ["Chest", "Triceps", "Shoulders", "Core"],
-  blurb: "The classic. Spotter checks depth, body line and tempo on every rep.",
+  blurb: "The classic. Cadence checks depth, body line and tempo on every rep.",
   steps: [
     "Hands just wider than your shoulders, arms straight.",
     "Make one straight line from head to heels and brace your core.",
     "Lower until your elbows bend to about 90 degrees.",
     "Push the floor away until your arms are straight again.",
   ],
-  easier: "Knee push-ups or hands on a bench. Spotter detects knee push-ups automatically.",
+  easier: "Knee push-ups or hands on a bench. Cadence detects knee push-ups automatically.",
   harder: "Feet raised on a step, or a 3-second lowering phase.",
   met: 8,
   setup: {
@@ -111,7 +111,7 @@ export const curl: RepExercise = {
   kind: "reps",
   category: "upper",
   muscles: ["Biceps", "Forearms"],
-  blurb: "Standing curls with anything you can hold. Spotter catches swinging and drifting elbows.",
+  blurb: "Standing curls with anything you can hold. Cadence catches swinging and drifting elbows.",
   steps: [
     "Stand tall, arms by your sides, palms facing forward.",
     "Keep your elbows pinned to your ribs.",
@@ -196,7 +196,7 @@ export const press: RepExercise = {
   kind: "reps",
   category: "upper",
   muscles: ["Shoulders", "Triceps", "Upper back"],
-  blurb: "Press overhead to full lockout. Spotter watches for uneven arms and half reps.",
+  blurb: "Press overhead to full lockout. Cadence watches for uneven arms and half reps.",
   steps: [
     "Stand facing the camera, hands at shoulder height, elbows under your wrists.",
     "Brace your core and squeeze your glutes.",
@@ -254,7 +254,7 @@ export const lateralRaise: RepExercise = {
   kind: "reps",
   category: "upper",
   muscles: ["Side shoulders", "Upper back"],
-  blurb: "Raise your arms out to shoulder height. Spotter stops you going too high.",
+  blurb: "Raise your arms out to shoulder height. Cadence stops you going too high.",
   steps: [
     "Stand facing the camera, arms by your sides.",
     "Keep a soft bend in your elbows.",

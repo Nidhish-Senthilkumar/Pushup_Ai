@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { APP_NAME, TAGLINE } from "../config";
+import { APP_NAME } from "../config";
 import { href } from "../lib/router";
 import { setProfile, type Profile } from "../lib/store";
 import { Figure } from "../ui/Figure";
 import { Icon } from "../ui/icons";
 
-/** First visit: what Spotter is, then three optional questions. Everything can be skipped. */
+/** First visit: what Cadence is, then three optional questions. Everything can be skipped. */
 export function Onboarding() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -21,7 +21,7 @@ export function Onboarding() {
             <br />
             <span className="text-volt">Your AI spotter.</span>
           </h1>
-          <p className="mt-4 max-w-lg text-lg text-ink-2">{TAGLINE} It counts every rep, catches bad form the moment it happens and tells you how to fix it. Your video never leaves your device.</p>
+          <p className="mt-4 max-w-lg text-lg text-ink-2">Real-time form coaching from any camera. It counts every rep, catches bad form the moment it happens and tells you how to fix it. Your video never leaves your device.</p>
           <ul className="mt-6 space-y-2 text-ink-2">
             {["13 exercises, coached live", "Hands-free guided workouts", "A fitness test that builds your plan", "Arcade challenges with a leaderboard"].map((t) => (
               <li key={t} className="flex items-center gap-2">

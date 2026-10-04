@@ -25,7 +25,7 @@ export const squat: RepExercise = {
   kind: "reps",
   category: "lower",
   muscles: ["Quads", "Glutes", "Hamstrings", "Core"],
-  blurb: "Sit back and stand tall. Spotter measures depth and catches knees caving in.",
+  blurb: "Sit back and stand tall. Cadence measures depth and catches knees caving in.",
   steps: [
     "Feet shoulder-width apart, toes turned out slightly.",
     "Push your hips back and bend your knees like sitting into a chair.",
@@ -99,7 +99,7 @@ export const lunge: RepExercise = {
   kind: "reps",
   category: "lower",
   muscles: ["Quads", "Glutes", "Hamstrings", "Balance"],
-  blurb: "Alternate legs. Spotter checks your front knee depth and keeps your torso tall.",
+  blurb: "Alternate legs. Cadence checks your front knee depth and keeps your torso tall.",
   steps: [
     "Stand tall, feet hip-width apart.",
     "Step one foot forward and lower your back knee toward the floor.",
@@ -156,7 +156,7 @@ export const bridge: RepExercise = {
   kind: "reps",
   category: "lower",
   muscles: ["Glutes", "Hamstrings", "Lower back"],
-  blurb: "Drive your hips up to a straight line. Spotter checks you finish every rep.",
+  blurb: "Drive your hips up to a straight line. Cadence checks you finish every rep.",
   steps: [
     "Lie on your back, knees bent, feet flat and hip-width apart.",
     "Press through your heels and squeeze your glutes.",

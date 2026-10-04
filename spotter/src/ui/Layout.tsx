@@ -20,7 +20,7 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
       </a>
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-line bg-surface/60 p-5 backdrop-blur lg:flex">
-        <a href={href("/")} className="mb-8 block" aria-label="Spotter home">
+        <a href={href("/")} className="mb-8 block" aria-label="Cadence home">
           <Logo />
         </a>
         <nav aria-label="Main" className="flex flex-col gap-1">
@@ -59,7 +59,7 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
 
       {/* Mobile header */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line/60 bg-page/80 px-4 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
-        <a href={href("/")} className="py-3" aria-label="Spotter home">
+        <a href={href("/")} className="py-3" aria-label="Cadence home">
           <Logo size={28} />
         </a>
         <a href={href("/arcade")} className="chip border-volt/40 text-volt" aria-label="Arcade mode">

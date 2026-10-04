@@ -1,0 +1,10 @@
+// Publishes Cadence at https://getcadence.cc on Cloudflare: the built files in dist/, no server code.
+// Deploy (see HANDOFF.md): npm run build, then npx wrangler@4 deploy
+{
+  "name": "cadence-fitness",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "getcadence.cc", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}

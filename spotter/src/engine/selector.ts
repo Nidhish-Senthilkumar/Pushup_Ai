@@ -6,7 +6,7 @@ import type { Landmark, Point3, PoseFrame } from "./types";
  * Picks who to coach when several people are in view, by watching who is
  * actually doing the exercise.
  *
- * Following the biggest person fails exactly where Spotter is most often used:
+ * Following the biggest person fails exactly where Cadence is most often used:
  * at a booth, a spectator standing nearer the camera is bigger than the person
  * exercising. Tested on real footage of a woman curling next to a presenter
  * who stands still and talks: "biggest" followed the presenter for the whole

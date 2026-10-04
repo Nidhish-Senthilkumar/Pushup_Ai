@@ -24,7 +24,7 @@ export function Library() {
   return (
     <div>
       <PageTitle eyebrow="Train" title="Exercise library">
-        Thirteen moves Spotter can see, count and coach. Pick one and do a set; the camera does the rest.
+        Thirteen moves Cadence can see, count and coach. Pick one and do a set; the camera does the rest.
       </PageTitle>
       <div className="scrollbar-none -mx-4 mb-5 flex gap-2 overflow-x-auto px-4" role="toolbar" aria-label="Filter exercises">
         {FILTERS.map((f) => (

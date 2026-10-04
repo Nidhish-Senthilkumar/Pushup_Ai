@@ -67,7 +67,7 @@ export function Summary({ id }: { id: string }) {
       lines: [`Form score ${form}/100`, reps ? `${clean} clean reps of ${reps}` : `${holdS} s in good form`, `${mins} min · +${w.xp} XP`],
       date: new Date(w.startedAt),
     });
-    if (blob) await shareOrDownload(blob, `spotter-${w.id}.png`);
+    if (blob) await shareOrDownload(blob, `cadence-${w.id}.png`);
   };
 
   return (

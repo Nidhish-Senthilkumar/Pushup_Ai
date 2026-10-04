@@ -250,7 +250,7 @@ export const burpee: RepExercise = {
   kind: "reps",
   category: "cardio",
   muscles: ["Full body", "Heart", "Chest", "Legs"],
-  blurb: "The full-body classic. Spotter checks you reach a full plank and stand all the way up.",
+  blurb: "The full-body classic. Cadence checks you reach a full plank and stand all the way up.",
   steps: [
     "Stand tall, feet shoulder-width apart.",
     "Squat down and put your hands on the floor.",

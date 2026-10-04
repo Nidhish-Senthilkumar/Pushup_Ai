@@ -24,7 +24,7 @@ export function More() {
             <Icon.download />
           </span>
           <span className="flex-1">
-            <span className="block font-bold">Install Spotter</span>
+            <span className="block font-bold">Install Cadence</span>
             <span className="text-sm text-muted">{install.canInstall ? "Add it to your home screen. It opens full screen and works offline." : "On iPhone: tap Share, then Add to Home Screen."}</span>
           </span>
           {install.canInstall && (

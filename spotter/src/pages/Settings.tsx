@@ -30,7 +30,7 @@ export function Settings() {
     const blob = new Blob([exportAll()], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `spotter-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `cadence-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
   };
 
@@ -139,7 +139,7 @@ export function Settings() {
               const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
               const el = document.createElement("a");
               el.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-              el.download = `spotter-leaderboard-${new Date().toISOString().slice(0, 10)}.csv`;
+              el.download = `cadence-leaderboard-${new Date().toISOString().slice(0, 10)}.csv`;
               el.click();
             }}
           >
@@ -171,7 +171,7 @@ export function Settings() {
             onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;
-              setMsg(importAll(await f.text()) ? "Backup imported." : "That file isn't a Spotter backup.");
+              setMsg(importAll(await f.text()) ? "Backup imported." : "That file isn't a Cadence backup.");
             }}
           />
           {sample ? (

@@ -3,7 +3,7 @@ import type { SetSummary } from "../engine/session";
 import type { Workout } from "./plans";
 
 /**
- * Everything Spotter remembers, kept on this device only (localStorage).
+ * Everything Cadence remembers, kept on this device only (localStorage).
  * No account, no server: the history, the leaderboard and the settings never
  * leave the browser unless the person exports them.
  */
