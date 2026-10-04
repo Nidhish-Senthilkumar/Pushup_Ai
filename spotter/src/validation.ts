@@ -1,5 +1,5 @@
 /**
- * Results of checking Spotter's rep counter against real, openly licensed
+ * Results of checking Cadence's rep counter against real, openly licensed
  * exercise footage. Counted by hand from frame strips; see VALIDATION.md and
  * scripts/validation/truth.json. Regenerate the engine side with
  * `npx vitest run src/engine/realClips.eval.test.ts` after tracing the clips.

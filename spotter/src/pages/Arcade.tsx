@@ -79,10 +79,9 @@ export function Arcade() {
   const [result, setResult] = useState<ArcadeEntry | null>(null);
   const challenge = CHALLENGES[sel]!;
   const seconds = data.settings.arcadeSeconds;
-  // A visitor's phone can't open "localhost" or the laptop's Wi-Fi address once they leave, so a local copy points the QR code at the hosted app.
-  const local = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(window.location.hostname);
-  const shareUrl = data.settings.shareUrl || (local && HOSTED_URL ? HOSTED_URL : window.location.href.split("#")[0]!);
-  const localOnly = !data.settings.shareUrl && local && !HOSTED_URL;
+  // The QR code sends visitors to the public address, so their history lives in one place. Without one, a copy on "localhost" can't be opened by a visitor's phone.
+  const shareUrl = data.settings.shareUrl || HOSTED_URL || window.location.href.split("#")[0]!;
+  const localOnly = !data.settings.shareUrl && !HOSTED_URL && /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(window.location.hostname);
 
   // Esc returns to the attract screen from anywhere; arrow keys and Enter drive it from a keyboard.
   useEffect(() => {
@@ -452,7 +451,7 @@ function ShareQr({ url, localOnly, title, text }: { url: string; localOnly: bool
   }
   return (
     <div className="card flex items-center gap-4 p-4">
-      <QrCode text={url} label="QR code to open Spotter on your phone" className="h-28 w-28 shrink-0 rounded-lg p-1.5" margin={1} />
+      <QrCode text={url} label="QR code to open Cadence on your phone" className="h-28 w-28 shrink-0 rounded-lg p-1.5" margin={1} />
       <div>
         <div className="font-bold">{title}</div>
         <p className="text-sm text-muted">{text}</p>

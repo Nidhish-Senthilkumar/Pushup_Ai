@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Spotter: a free, real-time AI fitness coach that runs entirely in the browser.",
+  "description": "Cadence: a free, real-time AI fitness coach that runs entirely in the browser.",
   "scripts": {
     "predev": "node scripts/sync-mediapipe-assets.mjs",
     "dev": "vite",

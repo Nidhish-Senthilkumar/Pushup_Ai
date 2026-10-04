@@ -4,7 +4,7 @@ import type { PlanItem, Workout } from "./plans";
 /**
  * The fitness test: max push-ups, max squats in 60 seconds, and the longest
  * good-form plank. Push-ups are rated against published norms; squats and
- * planks against Spotter's own bands, which are general guidance and labelled
+ * planks against Cadence's own bands, which are general guidance and labelled
  * that way in the app.
  */
 
@@ -41,11 +41,11 @@ export const PUSHUP_NORMS: Record<"male" | "female", Record<Band, [number, numbe
 export const PUSHUP_SOURCE =
   "Push-up ratings: Canadian Physical Activity, Fitness & Lifestyle Approach (CSEP, 2003), as reproduced in ACSM's Guidelines for Exercise Testing and Prescription. Men's norms use full push-ups, women's use knee push-ups.";
 
-/** Spotter's own bands for 60 seconds of squats and the good-form plank. General guidance, not clinical norms. */
+/** Cadence's own bands for 60 seconds of squats and the good-form plank. General guidance, not clinical norms. */
 const SQUAT_BANDS: [number, number, number, number] = [15, 25, 35, 45];
 const PLANK_BANDS_S: [number, number, number, number] = [20, 45, 75, 120];
 
-export const OWN_BANDS_NOTE = "Squat and plank ratings are Spotter's own guidance bands, not clinical norms.";
+export const OWN_BANDS_NOTE = "Squat and plank ratings are Cadence's own guidance bands, not clinical norms.";
 
 function rate(value: number, lows: [number, number, number, number]): Rating {
   let i = 0;

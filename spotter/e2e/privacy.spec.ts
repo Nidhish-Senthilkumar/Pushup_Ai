@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { camera, skipOnboarding } from "./helpers";
 test.use(camera("squat-front.y4m"));
 /**
- * Spotter promises nothing leaves the device. During a whole live set (and a
+ * Cadence promises nothing leaves the device. During a whole live set (and a
  * minute after, when MediaPipe's built-in usage logger would report), no
  * request may go to any other host.
  */

@@ -13,7 +13,7 @@ import { POSE_MODEL_PATHS, WASM_BASE_PATH } from "./assetPaths.generated";
 /**
  * MediaPipe's task runtime sends Google anonymous performance statistics
  * (which task ran, how often, how fast) to odml.pa.googleapis.com every
- * minute. No images or body points are in it, but Spotter promises that
+ * minute. No images or body points are in it, but Cadence promises that
  * nothing leaves the device, so that one request is answered locally instead.
  * Checked with a network capture of a live set (e2e/privacy.spec.ts).
  */

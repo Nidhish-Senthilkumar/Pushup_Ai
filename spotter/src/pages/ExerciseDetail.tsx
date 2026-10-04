@@ -70,7 +70,7 @@ export function ExerciseDetail({ id }: { id: string }) {
                 ))}
               </div>
             )}
-            {mode === "free" && <p className="text-sm text-muted">Go until you're done, then tap Finish. Spotter counts and coaches the whole way.</p>}
+            {mode === "free" && <p className="text-sm text-muted">Go until you're done, then tap Finish. Cadence counts and coaches the whole way.</p>}
             <a href={href(go)} className="btn btn-volt mt-4 h-13 w-full text-base" data-testid="start-set">
               <Icon.camera size={20} /> Start with camera
             </a>
@@ -121,7 +121,7 @@ export function ExerciseDetail({ id }: { id: string }) {
           </div>
         </section>
         <section className="card p-5">
-          <h2 className="mb-3 text-lg font-bold">What Spotter checks</h2>
+          <h2 className="mb-3 text-lg font-bold">What Cadence checks</h2>
           <ul className="space-y-3 text-sm">
             {ex.kind === "reps" && (
               <li>

@@ -99,7 +99,7 @@
       "truth": 1,
       "heldOut": true,
       "note": "Held out: hand count recorded before the engine ever saw the clip, and no engine change after. Barbell press filmed from behind; starts with the bar overhead and ends at the top of the next press",
-      "knownMiss": "Spotter counts 0: from behind, the head and bar hide both hands at the bottom of the press, so the start position is never seen"
+      "knownMiss": "Cadence counts 0: from behind, the head and bar hide both hands at the bottom of the press, so the start position is never seen"
     },
     {
       "clip": "pushpress-front",

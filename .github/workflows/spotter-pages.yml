@@ -1,6 +1,6 @@
-# Builds Spotter (spotter/) and publishes it to GitHub Pages.
+# Builds Cadence (spotter/) and publishes a mirror to GitHub Pages. The main site, getcadence.cc, is on Cloudflare (see spotter/HANDOFF.md).
 # One-time setup by a repo admin: Settings → Pages → Source: "GitHub Actions".
-name: Deploy Spotter
+name: Deploy GitHub Pages mirror
 
 on:
   push:

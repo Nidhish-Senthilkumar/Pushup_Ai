@@ -1,10 +1,10 @@
-# Spotter
+# Cadence
 
-**A free AI fitness coach that runs entirely in your browser.** Point any camera at yourself and Spotter counts every rep, catches bad form the moment it happens, tells you how to fix it, and keeps track of your progress. Your video never leaves your device, there's no account, and it works offline.
+**A free AI fitness coach that runs entirely in your browser.** Point any camera at yourself and Cadence counts every rep, catches bad form the moment it happens, tells you how to fix it, and keeps track of your progress. Your video never leaves your device, there's no account, and it works offline.
 
-**Try it: https://nidhish-senthilkumar.github.io/Pushup_Ai/** (open it in Chrome or Safari and allow the camera).
+**Try it: https://getcadence.cc** (open it in Chrome or Safari and allow the camera). A mirror runs on GitHub Pages at https://nidhish-senthilkumar.github.io/Pushup_Ai/.
 
-Spotter grew out of PushBot, the push-up form checker in the rest of this repository (see [FINDINGS.md](FINDINGS.md) for what changed and why).
+Cadence grew out of PushBot, the push-up form checker in the rest of this repository (see [FINDINGS.md](FINDINGS.md) for what changed and why).
 
 ## What it does
 
@@ -15,7 +15,7 @@ Spotter grew out of PushBot, the push-up form checker in the rest of this reposi
 - **Your own workouts:** a builder for any mix of exercises, reps or timed sets, and rests, run hands-free like the built-in ones.
 - **Fitness test and a 4-week plan:** max push-ups (rated against published norms), 60 seconds of squats and a max plank, then a plan that starts at half your max and grows 10% a week.
 - **Progress:** coach insights (what's improving, your most common fault and its fix), a weekly goal, streaks, levels and XP, personal records, 15 achievements, a 12-week activity calendar, form-score trends overall and per exercise, full history and shareable result cards.
-- **Arcade booth mode:** 30-second challenges where only perfect-form reps count, a live leaderboard, hands-free challenge selection by raising your hands, a **Duel mode** where two people side by side are counted separately, and a QR code so visitors can take Spotter home on their phone.
+- **Arcade booth mode:** 30-second challenges where only perfect-form reps count, a live leaderboard, hands-free challenge selection by raising your hands, a **Duel mode** where two people side by side are counted separately, and a QR code so visitors can take Cadence home on their phone.
 - **X-ray view:** one tap on the live screen shows the numbers the AI is working from (joint angles, body line, depth, frame rate). Great for explaining it to judges.
 - **Analyze a video:** upload a recorded set for the same breakdown (the original PushBot flow, now on-device).
 - **A built-in presentation** at `#/pitch`: nine slides for the convention, with a button that jumps straight into the live demo.
@@ -76,7 +76,7 @@ scripts/           asset sync, test footage, validation data
 
 ## Privacy
 
-The pose model runs inside the browser tab. Frames go in, 33 points come out, and nothing is uploaded. MediaPipe's runtime normally sends Google anonymous performance statistics every minute; Spotter answers that request locally instead, and `e2e/privacy.spec.ts` checks that a whole live set makes no request to any other server. History, records and the leaderboard are stored in the browser's local storage on that device only, and can be exported or erased in Settings.
+The pose model runs inside the browser tab. Frames go in, 33 points come out, and nothing is uploaded. MediaPipe's runtime normally sends Google anonymous performance statistics every minute; Cadence answers that request locally instead, and `e2e/privacy.spec.ts` checks that a whole live set makes no request to any other server. History, records and the leaderboard are stored in the browser's local storage on that device only, and can be exported or erased in Settings.
 
 ## Credits
 

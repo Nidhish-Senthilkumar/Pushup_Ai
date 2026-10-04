@@ -1,6 +1,6 @@
 {
-  "name": "Spotter: AI fitness coach",
-  "short_name": "Spotter",
+  "name": "Cadence: AI fitness coach",
+  "short_name": "Cadence",
   "description": "Real-time form coaching from any camera. Free, and your video never leaves your device.",
   "start_url": "./",
   "scope": "./",

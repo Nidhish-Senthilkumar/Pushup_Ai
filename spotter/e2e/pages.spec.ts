@@ -69,6 +69,6 @@ test("the share card downloads as a PNG", async ({ page, browserName }) => {
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Share card" }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toMatch(/^spotter-.*\.png$/);
+  expect(file.suggestedFilename()).toMatch(/^cadence-.*\.png$/);
   await file.saveAs("test-results/screens/share-card.png");
 });

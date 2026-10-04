@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 C=e2e/.cache
 mkdir -p "$C/videos" "$C/clips" "$C/fake"
 # Wikimedia asks for a descriptive User-Agent with a way to reach the project.
-UA="SpotterTests/0.1 (https://github.com/Nidhish-Senthilkumar/Pushup_Ai) curl/8"
+UA="CadenceTests/0.1 (https://github.com/Nidhish-Senthilkumar/Pushup_Ai) curl/8"
 B=https://upload.wikimedia.org/wikipedia/commons
 
 fetch() { [ -s "$C/videos/$1" ] && [ "$(wc -c < "$C/videos/$1")" -gt 100000 ] || { curl -sSL -A "$UA" -o "$C/videos/$1" "$B/$2"; sleep 3; }; }

@@ -1,7 +1,7 @@
 """Search Wikimedia Commons for openly licensed exercise videos and print title, size, duration and licence."""
 import json, subprocess, sys, time, urllib.parse
 
-UA = "SpotterTests/0.1 (open-source fitness coach test suite; contact via github.com/Nidhish-Senthilkumar/Pushup_Ai)"
+UA = "CadenceTests/0.1 (open-source fitness coach test suite; contact via github.com/Nidhish-Senthilkumar/Pushup_Ai)"
 
 def get(params):
     url = "https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode({**params, "format": "json"})

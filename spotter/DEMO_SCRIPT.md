@@ -4,17 +4,17 @@ What to say at the convention, how to run the demo, and answers for the question
 
 ## The one-liner (10 seconds)
 
-> "Spotter is a free AI personal trainer that watches you through any camera, counts your reps and fixes your form live. It runs entirely on your device, so your video never leaves your phone."
+> "Cadence is a free AI personal trainer that watches you through any camera, counts your reps and fixes your form live. It runs entirely on your device, so your video never leaves your phone."
 
 ## The pitch (about 60 seconds)
 
 > "Most people who work out alone never find out their form is off until something hurts. A personal trainer often costs fifty dollars or more an hour, and most fitness apps just count reps or play videos.
 >
-> Spotter watches you through your phone or laptop camera. An AI pose model finds 33 points on your body thirty times a second, and our engine turns those into joint angles, a body line, depth and tempo. So it can tell you, during the rep, 'Lift your hips' or 'Go lower', and after the set it writes you a coaching report from your own numbers: which reps were clean, where your form started slipping, and the one thing to fix next time.
+> Cadence watches you through your phone or laptop camera. An AI pose model finds 33 points on your body thirty times a second, and our engine turns those into joint angles, a body line, depth and tempo. So it can tell you, during the rep, 'Lift your hips' or 'Go lower', and after the set it writes you a coaching report from your own numbers: which reps were clean, where your form started slipping, and the one thing to fix next time.
 >
 > It covers 13 exercises, runs guided workouts hands-free, builds you a 4-week plan from a 5-minute fitness test, and tracks your streaks and personal records. It's free, needs no account, and works offline, because all the AI runs on your device.
 >
-> We started with PushBot, a push-up checker that uploaded video to a laptop and gave one sentence of feedback after the set. Spotter is what we learned from building it."
+> We started with PushBot, a push-up checker that uploaded video to a laptop and gave one sentence of feedback after the set. Cadence is what we learned from building it."
 
 ## Slides
 
@@ -53,13 +53,13 @@ Only for the very first load. After that it works offline, which is also why it'
 Speed, cost and honesty. Feedback has to arrive during the rep, not a few seconds later. An API would cost money per user and need the internet. And every sentence in our report comes from a number we measured, so it can't make things up.
 
 **"What was the hardest part?"**
-Pick one that's true for you. Good candidates: (1) people in the background. At a booth, the biggest person in the picture usually isn't the one exercising, so Spotter tracks everyone and follows whoever is actually doing the exercise. We found that bug on real footage of a woman doing curls next to a presenter. (2) Camera angles: a squat filmed from the front makes the thighs look short at the bottom, which first made the app think the person had walked away.
+Pick one that's true for you. Good candidates: (1) people in the background. At a booth, the biggest person in the picture usually isn't the one exercising, so Cadence tracks everyone and follows whoever is actually doing the exercise. We found that bug on real footage of a woman doing curls next to a presenter. (2) Camera angles: a squat filmed from the front makes the thighs look short at the bottom, which first made the app think the person had walked away.
 
 **"What's next?"**
 Record more people with the Data Lab, retrain the form classifier on held-out people, add more exercises, and wrap it as an installable app. It already installs from the browser as a PWA.
 
 **"How is it different from existing apps?"**
-Most free apps count reps or show videos. Paid ones with form feedback usually need a subscription, an account or special hardware. Spotter coaches form live, explains every correction, is free, and keeps your video on your device.
+Most free apps count reps or show videos. Paid ones with form feedback usually need a subscription, an account or special hardware. Cadence coaches form live, explains every correction, is free, and keeps your video on your device.
 
 ## Numbers to remember
 

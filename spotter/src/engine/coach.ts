@@ -45,7 +45,7 @@ function repReport(ex: Exercise & { kind: "reps" }, s: SetSummary, previous: Set
         { kind: "tip", text: `${ex.setup.placement}` },
         { kind: "tip", text: `Start from the start position: ${ex.setup.startHint.toLowerCase()}. A rep counts once your ${ex.depthLabel} gets at least halfway.` },
       ],
-      next: "Try again with the whole body in view. The setup screen turns green when Spotter can see everything it needs.",
+      next: "Try again with the whole body in view. The setup screen turns green when Cadence can see everything it needs.",
     };
   }
   const clean = reps.filter((r) => r.clean).length;

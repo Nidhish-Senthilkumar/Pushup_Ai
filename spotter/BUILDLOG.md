@@ -49,3 +49,10 @@ Autonomous build, 2026-10-03 evening. Newest entries at the bottom.
 - Pages was switched on in branch mode, which serves the old repository and fails on an empty folder committed as a broken submodule in June. HANDOFF.md now has the setting to change and the exact commands, including removing that entry.
 - The Arcade's QR code defaults to the hosted address (`HOSTED_URL`) when the app runs on the laptop, so the booth needs no setup for it.
 - Checked the exact commit contents in a clean copy with Node 22 (install, 65 tests, build), then served the build at `/Pushup_Ai/` and ran a live squat set, offline reload, privacy and QR checks in Chrome. Arcade, Duel, page and accessibility browser tests still pass.
+
+## Renamed to Cadence, moved to getcadence.cc (2026-10-04)
+
+- The team retired the Cadence task app and gave its domain to this one, so the app is now called Cadence (folder and storage keys unchanged, so saved history survives).
+- Cloudflare: `wrangler.jsonc` serves the build at getcadence.cc; `deploy/redirects/` sends app.getcadence.cc and www there and retires the old task app's service worker for people who installed it.
+- The Arcade's QR code now always points at https://getcadence.cc, including from the GitHub Pages mirror. Removed a repeated "Your AI spotter." on the welcome screen.
+- Checked: typecheck, 90 engine tests, both configs through `wrangler deploy --dry-run`, the site in `wrangler dev` (live squat set, offline, privacy, QR), and the old Cadence web build retired and redirected (5 of 5).

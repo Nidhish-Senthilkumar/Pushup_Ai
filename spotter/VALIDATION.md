@@ -1,6 +1,6 @@
 # Validation
 
-How we know Spotter counts and coaches correctly, what was tested, and where it's weak. Short version: it matched a hand count on 15 of 16 real clips and on 8 of 9 darkened, slowed-down or shrunk versions, every exercise passes synthetic tests with known reps and known faults, and the full app runs end to end with real footage as the camera.
+How we know Cadence counts and coaches correctly, what was tested, and where it's weak. Short version: it matched a hand count on 15 of 16 real clips and on 8 of 9 darkened, slowed-down or shrunk versions, every exercise passes synthetic tests with known reps and known faults, and the full app runs end to end with real footage as the camera.
 
 ## 1. Synthetic sets (every exercise, every fault)
 
@@ -22,7 +22,7 @@ Run with `npm test` (90 tests including the real-footage replays, a few seconds)
 
 **Results.**
 
-| Clip | Exercise | View | Hand count | Spotter |
+| Clip | Exercise | View | Hand count | Cadence |
 |---|---|---|---|---|
 | pushup-side | Push-up (slow, silhouetted) | Side | 6 | 6 |
 | pushup-angled | Knee push-up (after wall push-ups in close-up) | Angled | 3 | 3 |
@@ -41,7 +41,7 @@ Run with `npm test` (90 tests including the real-footage replays, a few seconds)
 | **pushpress-front** (held out) | Kettlebell press | Front | 1 | 1 |
 | **burpee-side** (held out) | Burpee (squat-thrust style) | Side | 6 | 6 |
 
-33 reps by hand, Spotter off by 1 in total. No false form faults on any scored check. The beta elbow-flare check fired on the angled knee push-ups, where flaring is plausible but unconfirmed.
+33 reps by hand, Cadence off by 1 in total. No false form faults on any scored check. The beta elbow-flare check fired on the angled knee push-ups, where flaring is plausible but unconfirmed.
 
 **Be clear about what this is.** The first 13 clips were used *while building the engine*: each mismatch led to a fix (listed below), so they are not an independent test. The last 3 were **held out**: counted by hand and written to `scripts/validation/truth.json` before the engine saw them, with no engine change afterwards. On those the score is 2 of 3 clips (7 of 8 reps). The burpee clip was counted before the burpee detector was even written, and it scored 6 of 6 on its first run. The miss is a barbell press filmed from behind: at the bottom, the head and the bar hide both hands, so the start position is never seen. That's a real limitation for presses filmed from behind; the app's setup screen asks for a front view for presses.
 
@@ -68,7 +68,7 @@ Convention halls are dim, booth laptops can be slow, and visitors stand wherever
 | pushup-side (6) | 6 | 6 | **0** |
 | press-seated (2) | 2 | 2 | 2 |
 
-8 of 9 match. The miss is the pose model's own limit: a dark silhouette shrunk to 40% isn't detected at all, so the setup screen keeps asking the person to step into view rather than counting wrongly. The far squat first came out as 0 too, but for a different reason: Spotter's "come closer" check refused to start even though the model tracked the person in 551 of 570 frames. Allowed to start, it counted both squats, so the check was relaxed from 20% to 14% of the frame (the clip sits at 16%). That threshold change was made using these stress clips, so they're not held out for it.
+8 of 9 match. The miss is the pose model's own limit: a dark silhouette shrunk to 40% isn't detected at all, so the setup screen keeps asking the person to step into view rather than counting wrongly. The far squat first came out as 0 too, but for a different reason: Cadence's "come closer" check refused to start even though the model tracked the person in 551 of 570 frames. Allowed to start, it counted both squats, so the check was relaxed from 20% to 14% of the frame (the clip sits at 16%). That threshold change was made using these stress clips, so they're not held out for it.
 
 These run with the rest in `src/engine/realClips.eval.test.ts`; the far push-up is recorded as a known miss.
 
@@ -86,7 +86,7 @@ These run with the rest in `src/engine/realClips.eval.test.ts`; the far push-up 
 - **Safari's engine (WebKit):** the pose model loads and counts the 2 squats in the rear-view clip correctly.
 - **Pages:** every page renders without errors in Chrome and WebKit.
 - **Offline:** after one visit, the app, the pose runtime and the model all load with the network off.
-- **Privacy:** during a live set and the minute after it, the page makes no request to any server but its own. (MediaPipe's runtime has a built-in usage logger that posts performance statistics to Google every 60 seconds; this test found it, and Spotter now blocks it.)
+- **Privacy:** during a live set and the minute after it, the page makes no request to any server but its own. (MediaPipe's runtime has a built-in usage logger that posts performance statistics to Google every 60 seconds; this test found it, and Cadence now blocks it.)
 - **Accessibility:** axe finds no WCAG 2.1 A/AA violations on the main pages.
 
 ## 4. Not validated
@@ -95,7 +95,7 @@ These run with the rest in `src/engine/realClips.eval.test.ts`; the far push-up 
 - **Form-fault accuracy on real people** is only checked indirectly (no false alarms on 15 clips of good form). We have no real clips of, say, sagging hips with a known answer. Recording teammates doing each fault on purpose, from the recommended camera position, is the next step and takes about 20 minutes with the Data Lab.
 - **Elbow flare** relies on the model's depth estimate and is shown as Beta; it never changes a score.
 - **Calories** are estimates from standard MET values.
-- **Fitness-test ratings:** push-ups use published norms (CSEP's CPAFLA, as reproduced by ACSM; women's norms assume knee push-ups). Squat and plank ratings are Spotter's own bands and are labelled that way in the app.
+- **Fitness-test ratings:** push-ups use published norms (CSEP's CPAFLA, as reproduced by ACSM; women's norms assume knee push-ups). Squat and plank ratings are Cadence's own bands and are labelled that way in the app.
 
 ## Reproduce
 

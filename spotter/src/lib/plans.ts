@@ -46,7 +46,7 @@ export const WORKOUTS: Workout[] = [
     title: "7-Minute Classic",
     subtitle: "30 seconds on, 10 off: the famous high-intensity circuit.",
     level: "Intermediate",
-    credit: "Adapted from Klika and Jordan, ACSM's Health & Fitness Journal, 2013. Step-ups, dips and side planks are swapped for moves Spotter can coach.",
+    credit: "Adapted from Klika and Jordan, ACSM's Health & Fitness Journal, 2013. Step-ups, dips and side planks are swapped for moves Cadence can coach.",
     items: [
       t("jumping-jack", 30, 10000),
       t("wall-sit", 30, 10000),

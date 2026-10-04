@@ -59,7 +59,7 @@ export function Analyze() {
   return (
     <div className="space-y-6">
       <PageTitle eyebrow="Analyze" title="Analyze a video">
-        Recorded a set on your phone? Spotter can go through it frame by frame and give you the same rep-by-rep breakdown. The video is processed on this device and never uploaded.
+        Recorded a set on your phone? Cadence can go through it frame by frame and give you the same rep-by-rep breakdown. The video is processed on this device and never uploaded.
       </PageTitle>
       <div className="card p-5">
         <div className="grid gap-4 sm:grid-cols-2">

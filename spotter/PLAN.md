@@ -1,10 +1,10 @@
-# Spotter: plan
+# Cadence: plan
 
 Working name for the new version of PushBot. The name lives in one constant (`src/config.ts`) so the team can rename it in one line.
 
 ## The idea
 
-PushBot today records 15 seconds of push-ups, uploads the video to a laptop running Flask and Ollama, and replies with one sentence. Spotter turns that into a real-time AI fitness coach that runs entirely in the browser:
+PushBot today records 15 seconds of push-ups, uploads the video to a laptop running Flask and Ollama, and replies with one sentence. Cadence turns that into a real-time AI fitness coach that runs entirely in the browser:
 
 - It watches you through the camera, counts every rep live and coaches your form while you move (on-screen cues, joint highlights, optional spoken cues).
 - It covers a library of bodyweight exercises, not just push-ups.
@@ -19,7 +19,7 @@ Everything runs on the device. Video never leaves the phone or laptop, it works 
 
 The current pipeline is fragile for a live demo (phone and laptop on the same Wi-Fi, hardcoded LAN IP, Flask + TensorFlow + Ollama all running). Feedback only comes after the set. The training data cannot support the 4-class model (see FINDINGS.md). A browser app with MediaPipe on the GPU fixes all of that: real-time, offline, one URL, and it runs on the booth laptop and every visitor's phone.
 
-Nothing existing is deleted. Spotter lives in `spotter/`. The Python ML work carries forward: the angle features match the team's training script exactly. The in-app Data Lab exports CSVs in the same format as `data/TRAINING_SET`, so the team can collect labeled reps from many people at the convention and retrain.
+Nothing existing is deleted. Cadence lives in `spotter/`. The Python ML work carries forward: the angle features match the team's training script exactly. The in-app Data Lab exports CSVs in the same format as `data/TRAINING_SET`, so the team can collect labeled reps from many people at the convention and retrain.
 
 ## Constraints
 

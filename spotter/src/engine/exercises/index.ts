@@ -3,7 +3,7 @@ import { bridge, lunge, squat, wallSit } from "./lower";
 import { curl, lateralRaise, press, pushup } from "./upper";
 import { burpee, highKnees, jumpingJack, plank, situp } from "./core";
 
-/** Every exercise Spotter can coach, in the order the library shows them. */
+/** Every exercise Cadence can coach, in the order the library shows them. */
 export const EXERCISES: Exercise[] = [pushup, squat, jumpingJack, plank, lunge, burpee, curl, press, lateralRaise, bridge, situp, highKnees, wallSit];
 
 const byId = new Map(EXERCISES.map((e) => [e.id, e]));

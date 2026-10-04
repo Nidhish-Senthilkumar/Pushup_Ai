@@ -16,7 +16,7 @@ export function Plans() {
   return (
     <div className="space-y-8">
       <PageTitle eyebrow="Workouts" title="Guided workouts">
-        Hands-free: Spotter counts each set, rests you, tells you what's next and starts the next set when you're in position.
+        Hands-free: Cadence counts each set, rests you, tells you what's next and starts the next set when you're in position.
       </PageTitle>
 
       <section className="card relative overflow-hidden p-6" aria-labelledby="myplan">
@@ -70,7 +70,7 @@ export function Plans() {
               <h2 id="myplan" className="display mt-1 text-4xl">
                 Get a plan built for you
               </h2>
-              <p className="mt-1 max-w-xl text-ink-2">Take the 5-minute fitness test (push-ups, squats, plank). Spotter rates each one and builds a 4-week, 3-days-a-week plan that starts where you are.</p>
+              <p className="mt-1 max-w-xl text-ink-2">Take the 5-minute fitness test (push-ups, squats, plank). Cadence rates each one and builds a 4-week, 3-days-a-week plan that starts where you are.</p>
             </div>
             <a className="btn btn-volt h-12" href={href("/assess")}>
               <Icon.target size={18} /> Take the test
@@ -92,7 +92,7 @@ export function Plans() {
         </div>
         {building && <WorkoutBuilder key={building === "new" ? "new" : building.id} initial={building === "new" ? undefined : building} onClose={() => setBuilding(null)} />}
         {data.customWorkouts.length === 0 && !building ? (
-          <p className="text-sm text-muted">Mix any exercises, reps or timed sets, and rests. Spotter runs it hands-free like the ones below.</p>
+          <p className="text-sm text-muted">Mix any exercises, reps or timed sets, and rests. Cadence runs it hands-free like the ones below.</p>
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {data.customWorkouts.map((w) => (
